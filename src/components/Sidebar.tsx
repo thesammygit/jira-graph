@@ -11,8 +11,8 @@ const MODES: { id: ViewMode; label: string; icon: string }[] = [
   { id: 'tree', label: 'Tree', icon: '☰' }, { id: 'timeline', label: 'Timeline', icon: '▭' },
 ];
 const LAYOUTS: LayoutKind[] = ['hybrid', 'hierarchical', 'force'];
-const DEPTHS: GroupDepth[] = [1, 2, 3];
-const DEPTH_LABEL: Record<GroupDepth, string> = { 1: 'Epic', 2: 'Story', 3: 'Task' };
+const DEPTHS: GroupDepth[] = [1, 2, 3, 4];
+const DEPTH_LABEL: Record<GroupDepth, string> = { 1: 'Epic', 2: 'Story', 3: 'Task', 4: 'Subtask' };
 const TYPES: IssueKind[] = ['epic', 'story', 'task', 'subtask', 'bug'];
 
 type Dataset = 'v3' | 'v2' | 'v2-no-epic' | 'large';

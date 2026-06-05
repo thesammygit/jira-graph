@@ -1,61 +1,49 @@
 # jira-graph
 
-An interactive Jira relationship visualizer built as a static SPA (Vite + React 19 + TypeScript). It serves a dual purpose: a polished portfolio piece now — fully functional with bundled mock fixtures that exercise v2/v3 API differences — and a plug-in-ready visualization engine for real Jira at work later. Swapping in live data requires only replacing the data provider; the entire graph layer is untouched.
+An interactive Jira relationship visualizer built as a static SPA (Vite + React 19 + TypeScript). It serves a dual purpose: a polished portfolio piece now — fully functional with bundled mock fixtures that exercise v2/v3 API differences — and a plug-in-ready visualization engine for real Jira at work later. Swapping in live data requires only replacing the data provider; the entire visualization layer is untouched.
 
 ---
 
 ## Screenshots
 
-Dark theme (default), grouped mode with orthogonal routed cross-links:
+Overview — grouped board with cross-epic links, dark theme:
 
-![jira-graph — dark theme, grouped mode](docs/screenshot-dark.png)
+![jira-graph — Overview, dark theme](docs/screenshot-overview.png)
 
-Light theme, graph mode (force layout):
+Spotlight — one ticket and everything it touches:
 
-![jira-graph — light theme, graph mode](docs/screenshot-light.png)
+![jira-graph — Spotlight view](docs/screenshot-spotlight.png)
 
-Large multi-project demo dataset (3 projects, deep hierarchy, many assignees):
+Light theme example:
 
-![jira-graph — large demo dataset](docs/screenshot-large.png)
+![jira-graph — light theme](docs/screenshot-light.png)
 
-Click any ticket for a quick overview popup (title, description, relationships, focus):
-
-![Ticket overview popup](docs/screenshot-popup.png)
-
-Click any connecting line for a relationship popup:
-
-![Edge relationship popup](docs/screenshot-edge-popup.png)
-
-> To regenerate: run the app locally (`npm run dev`), pick a theme/mode/dataset, and take a screenshot.
+> To regenerate: run the app locally (`npm run dev`), pick a theme/dataset, and take a screenshot.
 
 ---
 
 ## Features
 
-- **Whole-project map ⇄ focus mode** — toggle between a full overview and a focused view centred on a single ticket.
-- **Depth slider** — controls the neighborhood radius in focus mode (how many hops out from the focal node to render).
-- **Three hand-rolled layouts** — Hierarchical (top-down tree), Force (physics-style spring), and Hybrid (hierarchical spine + force leaf clusters), selectable at runtime.
-- **Type / status / edge filters** — show or hide nodes and edges by issue type, status, and relationship kind.
-- **Search** — filter nodes by key or summary text in real time.
+- **Overview** — all tickets grouped into nested container blocks: **epic ▸ story ▸ task ▸ subtask** (depth selectable 1–4, default full). Each container is collapsible; cross-epic links are drawn ticket-to-ticket. The clearest view for "what's in this epic and how epics connect." Includes a built-in React Flow minimap.
+- **Spotlight** — a focus+context view: one ticket centered as the hero, with its relationships laid out in labeled lanes (Epic/Parent, Blocked by, Blocks, Subtasks, Relates to). Click any related ticket to re-center. Breadcrumb trail, Back button, and an Overview shortcut keep navigation fast.
 - **Project / assignee filters** — toggle whole projects or individual assignees (incl. Unassigned) on/off from the sidebar; combine with type/status/relationship filters.
-- **Ticket focus** — a "Focus a ticket" typeahead (by key or title), or clicking a ticket's "Focus" action, filters to just that ticket + everything it relates to, with the ticket highlighted and a **Back to all** button.
-- **Click-a-ticket overview popup** — clicking any ticket (in any view) opens a quick popover with its title, description, status/assignee/points, **epic badge**, and **every relationship** (each clickable to peek), plus Focus + Open-in-Jira.
+- **Type / status / edge filters** — show or hide nodes and edges by issue type, status, and relationship kind.
+- **Ticket typeahead** — a "Focus a ticket" typeahead (by key or title) jumps straight to Spotlight for any ticket.
 - **Epic badge on cards** — non-epic tickets show a small purple chip with their linked epic's key.
 - **Rich ticket nodes** — each node shows the issue key, summary, type icon, status badge, assignee, and epic badge.
 - **Visualization only** — no connection handles; you can't accidentally "link" issues by dragging. It renders relationships, it doesn't edit them.
 - **Jira v2 / v3 + Epic Link compatibility** — normalizer handles `fields.parent` (Cloud v3) and the legacy "Epic Link" custom field (Server v2), detected at runtime by field name. When Epic Link is absent the epic edges simply disappear — no errors, no broken UI.
 - **Light / dark themes** — a CSS-variable theme system with a sidebar toggle (defaults to dark, persisted to `localStorage`). Every surface, including the React Flow chrome, follows the theme.
-- **Left sidebar controls** — modes, contextual depth/layout, filters, the relationship legend, search, dataset picker, and theme toggle live in one tidy sidebar; the canvas is full-width.
 - **Orthogonal edge routing** — a hand-rolled A\* router treats every ticket/container as an obstacle and draws right-angle paths *around* them: a connecting line never crosses under a ticket.
 - **Relationship-colored edges + legend** — edges are colored by relationship (blocks, relates, duplicates, clones, hierarchy) from a single palette; the sidebar legend lists the relationships present and toggles their visibility.
-- **Click-a-line popup** — click any edge for a popover showing both tickets, the relationship with direction, plain-English phrasing, focus actions, and open-in-Jira links.
+- **Click-a-line popup** — click any edge for a popover showing both tickets, the relationship with direction, plain-English phrasing, and open-in-Jira links.
 
 ---
 
 ## Design, theming & edge routing
 
 - **Theme system** — `src/theme/tokens.css` defines CSS custom properties under `[data-theme="dark"]` / `[data-theme="light"]`; `src/theme/useTheme.ts` holds the choice (default dark, `localStorage`-persisted, sets `data-theme` on `<html>`). Components reference tokens only, so the toggle reskins the whole app, including React Flow's background/minimap/controls.
-- **Sidebar** — `src/components/Sidebar.tsx` replaced the old top toolbar as the single control surface.
+- **Sidebar** — `src/components/Sidebar.tsx` is the single control surface.
 - **Edge routing** — `src/graph/routing.ts` is a pure, unit-tested orthogonal A\* router: `routeOrthogonal(from, to, obstacles)` returns right-angle waypoints that avoid every obstacle rect (guaranteed: no segment crosses a ticket; falls back to a direct L-path when clear). `src/components/RoutedEdge.tsx` renders it; the canvases supply obstacle rects (containers included) via `RoutingContext`. Zero new dependencies.
 - **Relationship palette** — `src/graph/relation-colors.ts` is the single source of truth mapping relationship → theme-aware color + label, feeding both edges and the legend.
 
@@ -63,24 +51,19 @@ Design spec: [`docs/superpowers/specs/2026-06-05-jira-graph-redesign-routing-des
 
 ---
 
-## View modes
+## Two views
 
-Four switchable views, all rendered from the same normalized graph, so big projects stay legible. Switch between them in the sidebar.
+The app has two switchable views, both rendered from the same normalized graph. Switch between them in the sidebar.
 
-- **Graph** — the free-form relationship graph (hierarchical / force / hybrid layouts, depth slider, filters, search).
-- **Grouped** — tickets collapse into nested **container blocks** with the full hierarchy: **epic ▸ story ▸ task ▸ subtask** (depth selectable 1–4, default full). Each container is collapsible; cross-container links are drawn ticket-to-ticket. The clearest view for "what's in this epic and how epics connect."
+- **Overview** — tickets collapse into nested **container blocks** with the full hierarchy: **epic ▸ story ▸ task ▸ subtask** (depth selectable 1–4, default full). Each container is collapsible; cross-container links are drawn ticket-to-ticket. Includes a built-in minimap. The clearest view for "what's in this epic and how epics connect."
 
-  ![Grouped mode](docs/screenshot-grouped.png)
+  ![Overview — grouped board with cross-epic links, dark theme](docs/screenshot-overview.png)
 
-- **Tree** — a compact collapsible outline with inline relationship badges (⛔ blocks, ↔ relates) you can click to jump. The densest view for very large projects.
+- **Spotlight** — a focus+context view centered on one ticket. Related tickets appear in labeled lanes: **Epic/Parent, Blocked by, Blocks, Subtasks, Relates to**. Click any related ticket to re-center on it. A breadcrumb trail tracks where you've been; the Back button steps back; the Overview button returns to the full board.
 
-  ![Tree mode](docs/screenshot-tree.png)
+  ![Spotlight — one ticket and everything it touches](docs/screenshot-spotlight.png)
 
-- **Timeline** — a Gantt view: bars on a date axis grouped by epic, `blocks` dependencies drawn as arrows. Needs a time dimension, so the normalizer also reads optional `startDate` / `dueDate` / `sprint` from Jira (`fields.duedate` and the Sprint custom field, feature-detected by name; synthesized into the mock fixtures). When a dataset has no dates the mode shows a friendly empty state.
-
-  ![Timeline mode](docs/screenshot-timeline.png)
-
-Design spec: [`docs/superpowers/specs/2026-06-05-jira-graph-view-modes-design.md`](docs/superpowers/specs/2026-06-05-jira-graph-view-modes-design.md) · Plan: [`docs/superpowers/plans/2026-06-05-jira-graph-view-modes.md`](docs/superpowers/plans/2026-06-05-jira-graph-view-modes.md)
+Design spec: [`docs/superpowers/specs/2026-06-05-jira-graph-spotlight-redesign-design.md`](docs/superpowers/specs/2026-06-05-jira-graph-spotlight-redesign-design.md) · Plan: [`docs/superpowers/plans/2026-06-05-jira-graph-spotlight-redesign.md`](docs/superpowers/plans/2026-06-05-jira-graph-spotlight-redesign.md)
 
 ---
 
@@ -102,16 +85,17 @@ The visualization knows nothing about Jira. It consumes a single normalized `{ n
                          ▼
 ┌────────────────────────────────────────────────┐
 │  Graph layer (knows nothing about Jira)         │
-│   ├── depth.ts      — neighborhood expansion   │
-│   ├── layouts/      — hierarchical/force/hybrid │
-│   ├── flow-elements.ts — React Flow node/edge   │
-│   └── graphReducer  — all interaction state     │
+│   ├── depth.ts         — neighborhood expansion │
+│   ├── grouping.ts      — containment grouping   │
+│   ├── grouped-elements.ts — React Flow compound │
+│   ├── spotlight.ts     — spotlight lane model   │
+│   └── graphReducer     — all interaction state  │
 └────────────────────────┬───────────────────────┘
                          │ React Flow nodes/edges
                          ▼
 ┌────────────────────────────────────────────────┐
-│  React UI (Sidebar, GraphCanvas, NodePopup,    │
-│            TicketNode)                          │
+│  React UI (Sidebar, GroupedCanvas (Overview),  │
+│            SpotlightView, EdgePopup, TicketNode)│
 └────────────────────────────────────────────────┘
 ```
 
@@ -130,7 +114,7 @@ Implementation plan: [`docs/superpowers/plans/2026-06-04-jira-graph.md`](docs/su
 | `react-dom` | `19.2.7` | Same maintainer and release cadence as `react`; necessary companion. |
 | `@xyflow/react` | `12.11.0` | The canonical React Flow v12 library. Transitive tree is essentially the d3 interaction modules (d3-drag, d3-zoom, d3-selection) — small, well-understood, widely audited. |
 
-All layout algorithms (hierarchical, force, hybrid), application state management, and graph traversal are **hand-rolled with zero additional runtime dependencies**. This minimal, deliberately-vetted dependency surface is intentional for a security-reviewed work environment.
+All layout algorithms, application state management, and graph traversal are **hand-rolled with zero additional runtime dependencies**. This minimal, deliberately-vetted dependency surface is intentional for a security-reviewed work environment.
 
 ### Hygiene practices
 
@@ -146,7 +130,7 @@ All layout algorithms (hierarchical, force, hybrid), application state managemen
 ```bash
 npm install        # install dependencies from lockfile
 npm run dev        # start Vite dev server (http://localhost:5173)
-npm test           # run Vitest unit tests (95 tests)
+npm test           # run Vitest unit tests (76 tests)
 npm run build      # type-check + Vite production build → dist/
 ```
 
@@ -165,7 +149,7 @@ The skeleton provider:
 - Fetches issues from `/rest/api/3/search/jql`. The current skeleton does a single un-paginated request (`fields=*all`); token-based pagination is marked `TODO(work)` in the file and is the one piece to finish against a live instance.
 - Requires a thin auth/CORS proxy to attach credentials and forward requests (out of scope for the public demo).
 
-The data provider is the **only** thing that changes when connecting to a live instance. The entire visualization layer — layouts, filters, depth expansion, state machine, React components — is untouched.
+The data provider is the **only** thing that changes when connecting to a live instance. The entire visualization layer — filters, depth expansion, state machine, React components — is untouched.
 
 ---
 
@@ -186,33 +170,25 @@ src/
 │   ├── v3.ts                 — Cloud v3 sample payload (parent field)
 │   └── v2.ts                 — Server v2 sample payload (Epic Link custom field)
 ├── graph/
-│   ├── depth.ts              — BFS neighborhood expansion for focus mode
-│   ├── flow-elements.ts      — maps NormalizedGraph → React Flow nodes/edges
-│   ├── grouping.ts           — containment grouping by depth (grouped mode)
-│   ├── grouped-elements.ts   — grouping → React Flow compound nodes/edges
-│   ├── tree.ts               — graph → collapsible tree rows + badges (tree mode)
-│   ├── timeline.ts           — dated nodes → Gantt geometry (timeline mode)
+│   ├── depth.ts              — BFS neighborhood expansion
+│   ├── grouping.ts           — containment grouping by depth (Overview)
+│   ├── grouped-elements.ts   — grouping → React Flow compound nodes/edges (Overview)
+│   ├── spotlight.ts          — lane model for Spotlight view
 │   ├── layouts/
-│   │   ├── hierarchical.ts   — top-down tree layout
-│   │   ├── force.ts          — spring/repulsion force layout
-│   │   ├── hybrid.ts         — hierarchical spine + force leaf clusters
-│   │   ├── grouped.ts        — nested container layout (grouped mode)
-│   │   ├── shared.ts         — shared layout utilities
-│   │   ├── types.ts          — layout type definitions
-│   │   └── index.ts          — layout registry / selector
+│   │   ├── grouped.ts        — nested container layout (Overview)
+│   │   └── types.ts          — layout type definitions
 │   └── (*.test.ts files alongside each module)
 ├── state/
 │   └── graphReducer.ts       — useReducer state machine (incl. viewMode/groupDepth/collapsed)
 └── components/
-    ├── GraphCanvas.tsx        — React Flow canvas wrapper (graph mode)
-    ├── GroupedCanvas.tsx      — nested container view (grouped mode)
+    ├── GroupedCanvas.tsx      — React Flow canvas wrapper (Overview)
+    ├── SpotlightView.tsx      — focus+context lane view (Spotlight)
     ├── ContainerNode.tsx      — grouped container node
-    ├── TreeView.tsx           — collapsible outline (tree mode)
-    ├── TimelineView.tsx       — Gantt view (timeline mode)
-    ├── ViewModeSwitch.tsx     — graph/grouped/tree/timeline + depth control
-    ├── Sidebar.tsx            — modes, project/assignee filters, legend, search, typeahead, dataset, theme
+    ├── Sidebar.tsx            — project/assignee filters, legend, search, typeahead, dataset, theme
     ├── TicketNode.tsx         — custom React Flow node (full + compact, epic badge, focal ring)
-    ├── NodePopup.tsx          — click-a-ticket overview (title, description, relationships, focus)
+    ├── TicketTypeahead.tsx    — ticket search typeahead
+    ├── RoutedEdge.tsx         — orthogonal routed edge renderer
+    ├── routing-context.ts     — React context for obstacle rects
     └── EdgePopup.tsx          — click-a-line relationship popover
 ```
 
@@ -220,6 +196,6 @@ src/
 
 ## Testing
 
-The pure-logic core — `normalize` (incl. date fields), depth expansion, all layouts, grouping, tree building, timeline geometry, `MockProvider`, `graphReducer`, `flow-elements`, and `grouped-elements` — is covered by **95 Vitest unit tests**. Tests run in Node (no browser required) and complete in under a second.
+The pure-logic core — `normalize` (incl. date fields), depth expansion, grouping, spotlight lane logic, `MockProvider`, `graphReducer`, `grouped-elements`, routing, relation-colors, relationships, and visible-filter — is covered by **76 Vitest unit tests**. Tests run in Node (no browser required) and complete in under a second.
 
 The thin React layer (component rendering, user interactions, visual output) is verified by running the app: `npm run dev` spins up the full SPA against the bundled fixtures, and `npm run build` confirms the production bundle compiles and tree-shakes cleanly.

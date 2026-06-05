@@ -39,7 +39,7 @@ export function toGroupedElements(graph: Graph, grouping: Grouping, layout: Grou
     nodes.push({
       id: pc.key, type: 'container', position: { x: pc.x, y: pc.y },
       ...(pc.parentKey ? { parentId: pc.parentKey, extent: 'parent' as const } : {}),
-      data: { node: header, depth: pc.depth, collapsed: state.collapsed.has(pc.key), width: pc.width, height: pc.height },
+      data: { node: header, depth: pc.depth, collapsed: state.collapsed.has(pc.key), focal: state.focusKey === pc.key, width: pc.width, height: pc.height },
       style: { width: pc.width, height: pc.height },
     });
   }
@@ -52,7 +52,7 @@ export function toGroupedElements(graph: Graph, grouping: Grouping, layout: Grou
     nodes.push({
       id: pm.key, type: 'ticket', parentId: pm.parentKey, extent: 'parent',
       position: { x: pm.x, y: pm.y },
-      data: { node, selected: state.selectedKey === pm.key, search: state.search, compact: true },
+      data: { node, selected: state.selectedKey === pm.key, search: state.search, compact: true, focal: state.focusKey === pm.key },
     });
   }
 

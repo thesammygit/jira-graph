@@ -25,7 +25,7 @@ function monthBoundaries(minMs: number, maxMs: number, scale: number): Array<{ x
   return result;
 }
 
-export function TimelineView({ graph, state, onSelect }: { graph: Graph; state: GraphState; onSelect: (k: string) => void }) {
+export function TimelineView({ graph, state, onSelect, onNodeOpen }: { graph: Graph; state: GraphState; onSelect: (k: string) => void; onNodeOpen?: (id: string, x: number, y: number) => void }) {
   const ref = useRef<HTMLDivElement>(null);
   const [width, setWidth] = useState(900);
   useEffect(() => { if (ref.current) setWidth(Math.max(600, ref.current.clientWidth - LABEL_W)); }, []);
@@ -106,8 +106,9 @@ export function TimelineView({ graph, state, onSelect }: { graph: Graph; state: 
             const by = y; y += ROW_H;
             const bx = LABEL_W + b.x;
             const barW = Math.max(8, b.width);
+            const isFocal = state.focusKey === b.key;
             return (
-              <g key={b.key} className="tl-bar" onClick={() => onSelect(b.key)} role="button" aria-label={b.key}>
+              <g key={b.key} className={`tl-bar${isFocal ? ' tl-bar-focal' : ''}`} onClick={(e) => onNodeOpen ? onNodeOpen(b.key, e.clientX, e.clientY) : onSelect(b.key)} role="button" aria-label={b.key}>
                 <rect
                   x={bx} y={by + (ROW_H - BAR_H) / 2}
                   width={barW} height={BAR_H}

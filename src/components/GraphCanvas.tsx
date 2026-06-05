@@ -20,13 +20,13 @@ const nodeTypes = { ticket: TicketNode } as unknown as NodeTypes;
 const edgeTypes = { routed: RoutedEdge } as unknown as EdgeTypes;
 
 export interface EdgeClickPayload { id: string; x: number; y: number; srcKey: string; tgtKey: string; relation: string; label: string }
-interface CanvasProps { graph: Graph; state: GraphState; onSelect: (key: string) => void; onEdgeClick?: (p: EdgeClickPayload) => void }
+interface CanvasProps { graph: Graph; state: GraphState; onSelect: (key: string) => void; onEdgeClick?: (p: EdgeClickPayload) => void; onNodeOpen?: (id: string, x: number, y: number) => void }
 
-function Canvas({ graph, state, onSelect, onEdgeClick }: CanvasProps) {
+function Canvas({ graph, state, onSelect, onEdgeClick, onNodeOpen }: CanvasProps) {
   const { nodes, edges } = useMemo(() => {
     const positions = layouts[state.layout](graph);
     return toFlowElements(graph, positions, state);
-  }, [graph, state.layout, state.hiddenTypes, state.hiddenStatuses, state.hiddenRelations, state.selectedKey, state.search]);
+  }, [graph, state.layout, state.hiddenTypes, state.hiddenStatuses, state.hiddenRelations, state.selectedKey, state.search, state.focusKey]);
 
   // React Flow only auto-fits on mount. Re-center the camera whenever the layout
   // or the underlying graph (dataset / focus / depth) changes, so switching
@@ -51,7 +51,8 @@ function Canvas({ graph, state, onSelect, onEdgeClick }: CanvasProps) {
         nodeTypes={nodeTypes}
         edgeTypes={edgeTypes}
         fitView
-        onNodeClick={(_, n: Node) => onSelect(n.id)}
+        nodesConnectable={false}
+        onNodeClick={(e, n: Node) => onNodeOpen ? onNodeOpen(n.id, e.clientX, e.clientY) : onSelect(n.id)}
         onEdgeClick={(e, edge) => onEdgeClick?.({ id: edge.id, x: e.clientX, y: e.clientY, srcKey: (edge.data as any)?.srcKey ?? edge.source, tgtKey: (edge.data as any)?.tgtKey ?? edge.target, relation: (edge.data as any)?.rel ?? '', label: (edge.data as any)?.label ?? '' })}
         proOptions={{ hideAttribution: true }}
         style={{ background: 'var(--bg)' }}
@@ -71,3 +72,4 @@ export function GraphCanvas(props: CanvasProps) {
     </ReactFlowProvider>
   );
 }
+

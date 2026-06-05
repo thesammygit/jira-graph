@@ -15,7 +15,7 @@ export function toFlowElements(graph: Graph, positions: Positions, state: GraphS
       id: gn.key,
       type: 'ticket',
       position: positions.get(gn.key) ?? { x: 0, y: 0 },
-      data: { node: gn, selected: state.selectedKey === gn.key, search: state.search },
+      data: { node: gn, selected: state.selectedKey === gn.key, search: state.search, focal: state.focusKey === gn.key },
     });
   }
   const edges: Edge[] = [];

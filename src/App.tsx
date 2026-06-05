@@ -10,8 +10,9 @@ import { GroupedCanvas } from './components/GroupedCanvas';
 import { TreeView } from './components/TreeView';
 import { TimelineView } from './components/TimelineView';
 import { Sidebar } from './components/Sidebar';
-import { DetailPanel } from './components/DetailPanel';
 import { EdgePopup } from './components/EdgePopup';
+import { NodePopup } from './components/NodePopup';
+import { BackButton } from './components/BackButton';
 import { useTheme } from './theme/useTheme';
 import './App.css';
 
@@ -43,12 +44,13 @@ export default function App() {
       <Sidebar graph={view} state={state} dispatch={dispatch}
         theme={theme} onToggleTheme={toggle} dataset={dataset} onDataset={setDataset} />
       <main className="app-main">
-        {state.viewMode === 'grouped' ? <GroupedCanvas graph={view} state={state} dispatch={dispatch} onSelect={(key) => dispatch({ type: 'select', key })} onEdgeClick={(p) => dispatch({ type: 'selectEdge', ...p })} />
-         : state.viewMode === 'tree' ? <TreeView graph={view} state={state} dispatch={dispatch} onSelect={(key) => dispatch({ type: 'select', key })} />
-         : state.viewMode === 'timeline' ? <TimelineView graph={view} state={state} onSelect={(key) => dispatch({ type: 'select', key })} />
-         : <GraphCanvas graph={view} state={state} onSelect={(key) => dispatch({ type: 'select', key })} onEdgeClick={(p) => dispatch({ type: 'selectEdge', ...p })} />}
-        <DetailPanel graph={view} selectedKey={state.selectedKey} dispatch={dispatch} />
+        {state.viewMode === 'grouped' ? <GroupedCanvas graph={view} state={state} dispatch={dispatch} onSelect={(key) => dispatch({ type: 'select', key })} onEdgeClick={(p) => dispatch({ type: 'selectEdge', ...p })} onNodeOpen={(id, x, y) => dispatch({ type: 'openNode', key: id, x, y })} />
+         : state.viewMode === 'tree' ? <TreeView graph={view} state={state} dispatch={dispatch} onSelect={(key) => dispatch({ type: 'select', key })} onNodeOpen={(id, x, y) => dispatch({ type: 'openNode', key: id, x, y })} />
+         : state.viewMode === 'timeline' ? <TimelineView graph={view} state={state} onSelect={(key) => dispatch({ type: 'select', key })} onNodeOpen={(id, x, y) => dispatch({ type: 'openNode', key: id, x, y })} />
+         : <GraphCanvas graph={view} state={state} onSelect={(key) => dispatch({ type: 'select', key })} onEdgeClick={(p) => dispatch({ type: 'selectEdge', ...p })} onNodeOpen={(id, x, y) => dispatch({ type: 'openNode', key: id, x, y })} />}
         <EdgePopup graph={view} state={state} dispatch={dispatch} />
+        <NodePopup graph={view} state={state} dispatch={dispatch} />
+        <BackButton state={state} dispatch={dispatch} />
       </main>
     </div>
   );

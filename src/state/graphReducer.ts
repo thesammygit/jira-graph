@@ -1,6 +1,9 @@
 import type { IssueKind, StatusCategory } from '../core/model';
 import type { LayoutKind } from '../graph/layouts';
 
+export type ViewMode = 'graph' | 'grouped' | 'tree' | 'timeline';
+export type GroupDepth = 1 | 2 | 3;
+
 export interface GraphState {
   mode: 'map' | 'focus';
   focusKey: string | null;
@@ -11,12 +14,18 @@ export interface GraphState {
   hiddenRelations: Set<string>;
   search: string;
   selectedKey: string | null;
+  viewMode: ViewMode;
+  groupDepth: GroupDepth;
+  collapsed: Set<string>;
 }
 
 export const initialState: GraphState = {
   mode: 'map', focusKey: null, depth: 2, layout: 'hybrid',
   hiddenTypes: new Set(), hiddenStatuses: new Set(), hiddenRelations: new Set(),
   search: '', selectedKey: null,
+  viewMode: 'graph',
+  groupDepth: 2,
+  collapsed: new Set(),
 };
 
 export type Action =
@@ -28,7 +37,10 @@ export type Action =
   | { type: 'toggleStatus'; status: StatusCategory }
   | { type: 'toggleRelation'; relation: string }
   | { type: 'setSearch'; query: string }
-  | { type: 'select'; key: string | null };
+  | { type: 'select'; key: string | null }
+  | { type: 'setViewMode'; viewMode: ViewMode }
+  | { type: 'setGroupDepth'; depth: GroupDepth }
+  | { type: 'toggleCollapsed'; key: string };
 
 function toggle<T>(set: Set<T>, value: T): Set<T> {
   const next = new Set(set);
@@ -47,6 +59,9 @@ export function reducer(state: GraphState, action: Action): GraphState {
     case 'toggleRelation': return { ...state, hiddenRelations: toggle(state.hiddenRelations, action.relation) };
     case 'setSearch': return { ...state, search: action.query };
     case 'select': return { ...state, selectedKey: action.key };
+    case 'setViewMode': return { ...state, viewMode: action.viewMode };
+    case 'setGroupDepth': return { ...state, groupDepth: action.depth };
+    case 'toggleCollapsed': return { ...state, collapsed: toggle(state.collapsed, action.key) };
     default: return state;
   }
 }

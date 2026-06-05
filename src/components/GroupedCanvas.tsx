@@ -18,7 +18,7 @@ import { RoutingContext } from './routing-context';
 const nodeTypes = { ticket: TicketNode, container: ContainerNode } as unknown as NodeTypes;
 const edgeTypes = { routed: RoutedEdge } as unknown as EdgeTypes;
 
-function Canvas({ graph, state, dispatch, onSelect }: { graph: Graph; state: GraphState; dispatch: Dispatch<Action>; onSelect: (k: string) => void }) {
+function Canvas({ graph, state, dispatch, onSelect, onEdgeClick }: { graph: Graph; state: GraphState; dispatch: Dispatch<Action>; onSelect: (k: string) => void; onEdgeClick?: (id: string, x: number, y: number) => void }) {
   const { nodes, edges } = useMemo(() => {
     const grouping = groupGraph(graph, state.groupDepth);
     const { nodes, edges } = toGroupedElements(graph, grouping, layoutGrouped(grouping), state);
@@ -48,7 +48,9 @@ function Canvas({ graph, state, dispatch, onSelect }: { graph: Graph; state: Gra
   return (
     <RoutingContext.Provider value={obstacles}>
       <ReactFlow nodes={nodes} edges={edges} nodeTypes={nodeTypes} edgeTypes={edgeTypes} fitView
-        onNodeClick={(_, n: Node) => n.type === 'ticket' && onSelect(n.id)} proOptions={{ hideAttribution: true }}
+        onNodeClick={(_, n: Node) => n.type === 'ticket' && onSelect(n.id)}
+        onEdgeClick={(e, edge) => onEdgeClick?.(edge.id, e.clientX, e.clientY)}
+        proOptions={{ hideAttribution: true }}
         style={{ background: 'var(--bg)' }}>
         <Background color="var(--bg-grid)" />
         <Controls />
@@ -58,6 +60,6 @@ function Canvas({ graph, state, dispatch, onSelect }: { graph: Graph; state: Gra
   );
 }
 
-export function GroupedCanvas(props: { graph: Graph; state: GraphState; dispatch: Dispatch<Action>; onSelect: (k: string) => void }) {
+export function GroupedCanvas(props: { graph: Graph; state: GraphState; dispatch: Dispatch<Action>; onSelect: (k: string) => void; onEdgeClick?: (id: string, x: number, y: number) => void }) {
   return <ReactFlowProvider><Canvas {...props} /></ReactFlowProvider>;
 }

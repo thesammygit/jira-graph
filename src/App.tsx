@@ -10,6 +10,7 @@ import { TreeView } from './components/TreeView';
 import { TimelineView } from './components/TimelineView';
 import { Sidebar } from './components/Sidebar';
 import { DetailPanel } from './components/DetailPanel';
+import { EdgePopup } from './components/EdgePopup';
 import { useTheme } from './theme/useTheme';
 import './App.css';
 
@@ -40,11 +41,12 @@ export default function App() {
       <Sidebar graph={view} state={state} dispatch={dispatch}
         theme={theme} onToggleTheme={toggle} dataset={dataset} onDataset={setDataset} />
       <main className="app-main">
-        {state.viewMode === 'grouped' ? <GroupedCanvas graph={view} state={state} dispatch={dispatch} onSelect={(key) => dispatch({ type: 'select', key })} />
+        {state.viewMode === 'grouped' ? <GroupedCanvas graph={view} state={state} dispatch={dispatch} onSelect={(key) => dispatch({ type: 'select', key })} onEdgeClick={(id, x, y) => dispatch({ type: 'selectEdge', id, x, y })} />
          : state.viewMode === 'tree' ? <TreeView graph={view} state={state} dispatch={dispatch} onSelect={(key) => dispatch({ type: 'select', key })} />
          : state.viewMode === 'timeline' ? <TimelineView graph={view} state={state} onSelect={(key) => dispatch({ type: 'select', key })} />
-         : <GraphCanvas graph={view} state={state} onSelect={(key) => dispatch({ type: 'select', key })} />}
+         : <GraphCanvas graph={view} state={state} onSelect={(key) => dispatch({ type: 'select', key })} onEdgeClick={(id, x, y) => dispatch({ type: 'selectEdge', id, x, y })} />}
         <DetailPanel graph={view} selectedKey={state.selectedKey} dispatch={dispatch} />
+        <EdgePopup graph={view} state={state} dispatch={dispatch} />
       </main>
     </div>
   );

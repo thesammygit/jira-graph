@@ -1,0 +1,18 @@
+.ep-scrim { position: fixed; inset: 0; z-index: 9; }
+.ep-pop { position: fixed; z-index: 10; width: 264px; transform: translate(-50%, 12px); background: var(--panel); border: 1px solid var(--border-strong); border-radius: var(--radius-lg); box-shadow: var(--shadow-lg); backdrop-filter: blur(10px); padding: 13px; color: var(--ink); font-family: var(--font-sans); animation: ep-in 140ms ease both; }
+@keyframes ep-in { from { opacity: 0; transform: translate(-50%, 6px); } to { opacity: 1; transform: translate(-50%, 12px); } }
+.ep-h { font-size: 10px; text-transform: uppercase; letter-spacing: .7px; color: var(--ink-muted); display: flex; justify-content: space-between; margin-bottom: 9px; }
+.ep-x { border: none; background: none; color: var(--ink-muted); font-size: 16px; cursor: pointer; }
+.ep-mini { background: var(--surface); border: 1px solid var(--border); border-left: 3px solid var(--border); border-radius: 9px; padding: 8px 10px; }
+.ep-k { font: 700 10px var(--font-mono); }
+.ep-s { font-size: 11px; color: var(--ink); margin-top: 3px; }
+.ep-meta { display: flex; align-items: center; gap: 6px; margin-top: 5px; }
+.ep-pill { font-size: 9px; font-weight: 700; }
+.ep-av { margin-left: auto; width: 18px; height: 18px; border-radius: 50%; background: var(--accent); color: #fff; font-size: 8px; font-weight: 700; display: flex; align-items: center; justify-content: center; }
+.ep-rel { text-align: center; margin: 8px 0; }
+.ep-badge { font-size: 11px; font-weight: 700; padding: 3px 12px; border-radius: 20px; }
+.ep-phrase { font-size: 10px; color: var(--ink-muted); text-align: center; margin-top: 9px; }
+.ep-actions { display: flex; gap: 7px; margin-top: 10px; }
+.ep-actions button { flex: 1; font-size: 10px; padding: 6px; border-radius: 8px; background: var(--surface); border: 1px solid var(--border); color: var(--ink); cursor: pointer; }
+.ep-open { display: flex; gap: 10px; justify-content: center; margin-top: 8px; }
+.ep-open a { font-size: 10px; color: var(--accent); }

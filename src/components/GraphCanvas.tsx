@@ -19,9 +19,9 @@ const nodeTypes = { ticket: TicketNode } as unknown as NodeTypes;
 // never logs "edge type 'routed' not found" during the initial render race.
 const edgeTypes = { routed: RoutedEdge } as unknown as EdgeTypes;
 
-interface CanvasProps { graph: Graph; state: GraphState; onSelect: (key: string) => void }
+interface CanvasProps { graph: Graph; state: GraphState; onSelect: (key: string) => void; onEdgeClick?: (id: string, x: number, y: number) => void }
 
-function Canvas({ graph, state, onSelect }: CanvasProps) {
+function Canvas({ graph, state, onSelect, onEdgeClick }: CanvasProps) {
   const { nodes, edges } = useMemo(() => {
     const positions = layouts[state.layout](graph);
     return toFlowElements(graph, positions, state);
@@ -51,6 +51,7 @@ function Canvas({ graph, state, onSelect }: CanvasProps) {
         edgeTypes={edgeTypes}
         fitView
         onNodeClick={(_, n: Node) => onSelect(n.id)}
+        onEdgeClick={(e, edge) => onEdgeClick?.(edge.id, e.clientX, e.clientY)}
         proOptions={{ hideAttribution: true }}
         style={{ background: 'var(--bg)' }}
       >

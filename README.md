@@ -25,6 +25,27 @@ An interactive Jira relationship visualizer built as a static SPA (Vite + React 
 
 ---
 
+## View modes
+
+Four switchable views, all rendered from the same normalized graph, so big projects stay legible. Switch between them in the toolbar.
+
+- **Graph** — the free-form relationship graph (hierarchical / force / hybrid layouts, depth slider, filters, search).
+- **Grouped** — tickets collapse into nested **container blocks** (epic ▸ story ▸ task, depth selectable 1–3). Each container is collapsible; cross-container links are drawn ticket-to-ticket. The clearest view for "what's in this epic and how epics connect."
+
+  ![Grouped mode](docs/screenshot-grouped.png)
+
+- **Tree** — a compact collapsible outline with inline relationship badges (⛔ blocks, ↔ relates) you can click to jump. The densest view for very large projects.
+
+  ![Tree mode](docs/screenshot-tree.png)
+
+- **Timeline** — a Gantt view: bars on a date axis grouped by epic, `blocks` dependencies drawn as arrows. Needs a time dimension, so the normalizer also reads optional `startDate` / `dueDate` / `sprint` from Jira (`fields.duedate` and the Sprint custom field, feature-detected by name; synthesized into the mock fixtures). When a dataset has no dates the mode shows a friendly empty state.
+
+  ![Timeline mode](docs/screenshot-timeline.png)
+
+Design spec: [`docs/superpowers/specs/2026-06-05-jira-graph-view-modes-design.md`](docs/superpowers/specs/2026-06-05-jira-graph-view-modes-design.md) · Plan: [`docs/superpowers/plans/2026-06-05-jira-graph-view-modes.md`](docs/superpowers/plans/2026-06-05-jira-graph-view-modes.md)
+
+---
+
 ## Architecture
 
 The visualization knows nothing about Jira. It consumes a single normalized `{ nodes, edges }` model; a `DataProvider` seam is the only coupling point.

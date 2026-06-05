@@ -14,6 +14,7 @@ export interface GraphState {
   hiddenRelations: Set<string>;
   search: string;
   selectedKey: string | null;
+  selectedEdge: { id: string; x: number; y: number } | null;
   viewMode: ViewMode;
   groupDepth: GroupDepth;
   collapsed: Set<string>;
@@ -22,7 +23,7 @@ export interface GraphState {
 export const initialState: GraphState = {
   mode: 'map', focusKey: null, depth: 2, layout: 'hybrid',
   hiddenTypes: new Set(), hiddenStatuses: new Set(), hiddenRelations: new Set(),
-  search: '', selectedKey: null,
+  search: '', selectedKey: null, selectedEdge: null,
   viewMode: 'graph',
   groupDepth: 2,
   collapsed: new Set(),
@@ -38,6 +39,8 @@ export type Action =
   | { type: 'toggleRelation'; relation: string }
   | { type: 'setSearch'; query: string }
   | { type: 'select'; key: string | null }
+  | { type: 'selectEdge'; id: string; x: number; y: number }
+  | { type: 'clearEdge' }
   | { type: 'setViewMode'; viewMode: ViewMode }
   | { type: 'setGroupDepth'; depth: GroupDepth }
   | { type: 'toggleCollapsed'; key: string };
@@ -58,7 +61,9 @@ export function reducer(state: GraphState, action: Action): GraphState {
     case 'toggleStatus': return { ...state, hiddenStatuses: toggle(state.hiddenStatuses, action.status) };
     case 'toggleRelation': return { ...state, hiddenRelations: toggle(state.hiddenRelations, action.relation) };
     case 'setSearch': return { ...state, search: action.query };
-    case 'select': return { ...state, selectedKey: action.key };
+    case 'select': return { ...state, selectedKey: action.key, selectedEdge: null };
+    case 'selectEdge': return { ...state, selectedEdge: { id: action.id, x: action.x, y: action.y }, selectedKey: null };
+    case 'clearEdge': return { ...state, selectedEdge: null };
     case 'setViewMode': return { ...state, viewMode: action.viewMode };
     case 'setGroupDepth': return { ...state, groupDepth: action.depth };
     case 'toggleCollapsed': return { ...state, collapsed: toggle(state.collapsed, action.key) };

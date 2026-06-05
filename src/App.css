@@ -1,5 +1,12 @@
 html, body, #root { height: 100%; margin: 0; }
 .app { display: flex; flex-direction: column; height: 100vh; }
 .app-bar { display: flex; align-items: center; gap: 14px; padding: 10px 14px; background: #1f2933; color: #fff; font-family: ui-sans-serif, system-ui; }
-.app-bar select { margin-left: auto; padding: 5px 8px; border-radius: 7px; border: 1px solid #52606d; background: #323f4b; color: #fff; }
-.app-canvas { position: relative; flex: 1; min-height: 0; }
+.app-bar select { margin-left: auto; padding: 5px 8px; border-radius: 7px; border: 1px solid #52606d; background: #323f4b; color: #fff; transition: border-color 150ms ease; }
+.app-canvas { position: relative; flex: 1; min-height: 0; background: #f7f9fc; }
+
+/* ── View mount animations ───────────────────────────────────────────── */
+@keyframes view-in {
+  from { opacity: 0; transform: translateY(5px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.app-canvas > * { animation: view-in 220ms ease both; }

@@ -9,15 +9,31 @@ export function ViewModeSwitch({ state, dispatch }: { state: GraphState; dispatc
   return (
     <div className="tb-group">
       <span className="tb-label">View</span>
-      {MODES.map((m) => (
-        <button key={m} className={state.viewMode === m ? 'on' : ''} onClick={() => dispatch({ type: 'setViewMode', viewMode: m })}>{m}</button>
-      ))}
+      <div className="segmented">
+        {MODES.map((m) => (
+          <button
+            key={m}
+            className={state.viewMode === m ? 'on' : ''}
+            onClick={() => dispatch({ type: 'setViewMode', viewMode: m })}
+          >
+            {m}
+          </button>
+        ))}
+      </div>
       {state.viewMode === 'grouped' && (
         <>
           <span className="tb-label" style={{ marginLeft: 8 }}>Depth</span>
-          {DEPTHS.map((d) => (
-            <button key={d} className={state.groupDepth === d ? 'on' : ''} onClick={() => dispatch({ type: 'setGroupDepth', depth: d })}>{DEPTH_LABEL[d]}</button>
-          ))}
+          <div className="segmented">
+            {DEPTHS.map((d) => (
+              <button
+                key={d}
+                className={state.groupDepth === d ? 'on' : ''}
+                onClick={() => dispatch({ type: 'setGroupDepth', depth: d })}
+              >
+                {DEPTH_LABEL[d]}
+              </button>
+            ))}
+          </div>
         </>
       )}
     </div>

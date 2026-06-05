@@ -54,7 +54,7 @@ export function toGroupedElements(graph: Graph, grouping: Grouping, layout: Grou
     nodes.push({
       id: pm.key, type: 'ticket', parentId: pm.parentKey, extent: 'parent',
       position: { x: pm.x, y: pm.y },
-      data: { node, selected: state.selectedKey === pm.key, search: state.search },
+      data: { node, selected: state.selectedKey === pm.key, search: state.search, compact: true },
     });
   }
 

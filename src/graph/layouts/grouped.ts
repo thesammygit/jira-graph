@@ -1,7 +1,7 @@
 import type { Grouping, GroupContainer } from '../grouping';
 
 export const GROUP = {
-  CHIP_W: 150, CHIP_H: 56, GAP: 12, PAD: 14, HEADER_H: 34, COLS: 3, CONTAINER_GAP: 28,
+  CHIP_W: 168, CHIP_H: 88, GAP: 12, PAD: 14, HEADER_H: 34, COLS: 3, CONTAINER_GAP: 28,
 };
 
 export interface PlacedContainer { key: string; x: number; y: number; width: number; height: number; parentKey?: string; depth: number }

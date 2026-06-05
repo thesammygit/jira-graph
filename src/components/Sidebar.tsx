@@ -15,7 +15,7 @@ const DEPTHS: GroupDepth[] = [1, 2, 3];
 const DEPTH_LABEL: Record<GroupDepth, string> = { 1: 'Epic', 2: 'Story', 3: 'Task' };
 const TYPES: IssueKind[] = ['epic', 'story', 'task', 'subtask', 'bug'];
 
-type Dataset = 'v3' | 'v2' | 'v2-no-epic';
+type Dataset = 'v3' | 'v2' | 'v2-no-epic' | 'large';
 
 export function Sidebar(props: {
   graph: Graph; state: GraphState; dispatch: Dispatch<Action>;
@@ -75,7 +75,7 @@ export function Sidebar(props: {
 
       <div className="sb-foot">
         <select className="sb-select" value={dataset} onChange={(e) => onDataset(e.target.value as Dataset)}>
-          <option value="v3">Cloud v3</option><option value="v2">Server v2</option><option value="v2-no-epic">v2 · no Epic Link</option>
+          <option value="large">Large demo (3 projects)</option><option value="v3">Cloud v3</option><option value="v2">Server v2</option><option value="v2-no-epic">v2 · no Epic Link</option>
         </select>
         <button className="sb-theme" onClick={onToggleTheme} aria-label="Toggle theme">{theme === 'dark' ? '☀ Light' : '☾ Dark'}</button>
       </div>

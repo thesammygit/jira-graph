@@ -1,21 +1,20 @@
 import type { Graph } from '../../core/model';
 import type { Positions } from './types';
-import { COL_W } from './types';
-import { rowsByLevel, yForLevel } from './shared';
+import { COL_W, ROW_H } from './types';
+import { rowsByDepth } from './shared';
 
 export function hierarchical(graph: Graph): Positions {
-  const rows = rowsByLevel(graph);
-  const maxLevel = Math.max(0, ...graph.nodes.map((n) => n.hierarchyLevel));
+  const { rows, depthOf } = rowsByDepth(graph);
   const pos: Positions = new Map();
   for (const row of rows) {
-    row.forEach((node, i) => pos.set(node.key, { x: i * COL_W, y: yForLevel(node.hierarchyLevel, maxLevel) }));
+    row.forEach((node, i) => pos.set(node.key, { x: i * COL_W, y: (depthOf.get(node.key) ?? 0) * ROW_H }));
   }
   barycenter(graph, rows, pos);
   return pos;
 }
 
 /** Sweeps: pull each node toward the mean x of its hierarchy-connected neighbors, then de-overlap per row. */
-function barycenter(graph: Graph, rows: ReturnType<typeof rowsByLevel>, pos: Positions): void {
+function barycenter(graph: Graph, rows: ReturnType<typeof rowsByDepth>['rows'], pos: Positions): void {
   const neighbors = new Map<string, string[]>();
   const add = (a: string, b: string) => {
     const arr = neighbors.get(a) ?? [];

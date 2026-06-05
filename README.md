@@ -14,6 +14,14 @@ Light theme, graph mode (force layout):
 
 ![jira-graph — light theme, graph mode](docs/screenshot-light.png)
 
+Large multi-project demo dataset (3 projects, deep hierarchy, many assignees):
+
+![jira-graph — large demo dataset](docs/screenshot-large.png)
+
+Click any ticket for a quick overview popup (title, description, relationships, focus):
+
+![Ticket overview popup](docs/screenshot-popup.png)
+
 Click any connecting line for a relationship popup:
 
 ![Edge relationship popup](docs/screenshot-edge-popup.png)
@@ -29,8 +37,12 @@ Click any connecting line for a relationship popup:
 - **Three hand-rolled layouts** — Hierarchical (top-down tree), Force (physics-style spring), and Hybrid (hierarchical spine + force leaf clusters), selectable at runtime.
 - **Type / status / edge filters** — show or hide nodes and edges by issue type, status, and relationship kind.
 - **Search** — filter nodes by key or summary text in real time.
-- **Rich ticket nodes** — each node shows the issue key, summary, type icon, status badge, and assignee.
-- **Detail panel** — click any node to open a side panel with full description (ADF rich text rendered as plain paragraphs), linked tickets, and metadata.
+- **Project / assignee filters** — toggle whole projects or individual assignees (incl. Unassigned) on/off from the sidebar; combine with type/status/relationship filters.
+- **Ticket focus** — a "Focus a ticket" typeahead (by key or title), or clicking a ticket's "Focus" action, filters to just that ticket + everything it relates to, with the ticket highlighted and a **Back to all** button.
+- **Click-a-ticket overview popup** — clicking any ticket (in any view) opens a quick popover with its title, description, status/assignee/points, **epic badge**, and **every relationship** (each clickable to peek), plus Focus + Open-in-Jira.
+- **Epic badge on cards** — non-epic tickets show a small purple chip with their linked epic's key.
+- **Rich ticket nodes** — each node shows the issue key, summary, type icon, status badge, assignee, and epic badge.
+- **Visualization only** — no connection handles; you can't accidentally "link" issues by dragging. It renders relationships, it doesn't edit them.
 - **Jira v2 / v3 + Epic Link compatibility** — normalizer handles `fields.parent` (Cloud v3) and the legacy "Epic Link" custom field (Server v2), detected at runtime by field name. When Epic Link is absent the epic edges simply disappear — no errors, no broken UI.
 - **Light / dark themes** — a CSS-variable theme system with a sidebar toggle (defaults to dark, persisted to `localStorage`). Every surface, including the React Flow chrome, follows the theme.
 - **Left sidebar controls** — modes, contextual depth/layout, filters, the relationship legend, search, dataset picker, and theme toggle live in one tidy sidebar; the canvas is full-width.
@@ -56,7 +68,7 @@ Design spec: [`docs/superpowers/specs/2026-06-05-jira-graph-redesign-routing-des
 Four switchable views, all rendered from the same normalized graph, so big projects stay legible. Switch between them in the sidebar.
 
 - **Graph** — the free-form relationship graph (hierarchical / force / hybrid layouts, depth slider, filters, search).
-- **Grouped** — tickets collapse into nested **container blocks** (epic ▸ story ▸ task, depth selectable 1–3). Each container is collapsible; cross-container links are drawn ticket-to-ticket. The clearest view for "what's in this epic and how epics connect."
+- **Grouped** — tickets collapse into nested **container blocks** with the full hierarchy: **epic ▸ story ▸ task ▸ subtask** (depth selectable 1–4, default full). Each container is collapsible; cross-container links are drawn ticket-to-ticket. The clearest view for "what's in this epic and how epics connect."
 
   ![Grouped mode](docs/screenshot-grouped.png)
 
@@ -134,7 +146,7 @@ All layout algorithms (hierarchical, force, hybrid), application state managemen
 ```bash
 npm install        # install dependencies from lockfile
 npm run dev        # start Vite dev server (http://localhost:5173)
-npm test           # run Vitest unit tests (81 tests)
+npm test           # run Vitest unit tests (95 tests)
 npm run build      # type-check + Vite production build → dist/
 ```
 
@@ -207,6 +219,6 @@ src/
 
 ## Testing
 
-The pure-logic core — `normalize` (incl. date fields), depth expansion, all layouts, grouping, tree building, timeline geometry, `MockProvider`, `graphReducer`, `flow-elements`, and `grouped-elements` — is covered by **81 Vitest unit tests**. Tests run in Node (no browser required) and complete in under a second.
+The pure-logic core — `normalize` (incl. date fields), depth expansion, all layouts, grouping, tree building, timeline geometry, `MockProvider`, `graphReducer`, `flow-elements`, and `grouped-elements` — is covered by **95 Vitest unit tests**. Tests run in Node (no browser required) and complete in under a second.
 
 The thin React layer (component rendering, user interactions, visual output) is verified by running the app: `npm run dev` spins up the full SPA against the bundled fixtures, and `npm run build` confirms the production bundle compiles and tree-shakes cleanly.

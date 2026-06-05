@@ -1,0 +1,158 @@
+export interface Rect { x: number; y: number; width: number; height: number }
+export interface Pt { x: number; y: number }
+
+const inflate = (r: Rect, p: number): Rect => ({ x: r.x - p, y: r.y - p, width: r.width + 2 * p, height: r.height + 2 * p });
+const ptInRect = (p: Pt, r: Rect) => p.x > r.x && p.x < r.x + r.width && p.y > r.y && p.y < r.y + r.height;
+
+// Does axis-aligned segment a-b cross rect interior?
+function segHits(a: Pt, b: Pt, r: Rect): boolean {
+  const x1 = Math.min(a.x, b.x), x2 = Math.max(a.x, b.x), y1 = Math.min(a.y, b.y), y2 = Math.max(a.y, b.y);
+  return x1 < r.x + r.width && x2 > r.x && y1 < r.y + r.height && y2 > r.y;
+}
+const clear = (a: Pt, b: Pt, rects: Rect[]) => rects.every((r) => !segHits(a, b, r));
+
+export function routeOrthogonal(from: Pt, to: Pt, obstacles: Rect[], opts: { padding?: number; grid?: number } = {}): Pt[] {
+  const pad = opts.padding ?? 12;
+  const grid = Math.max(4, opts.grid ?? 16);
+  const rects = obstacles.map((r) => inflate(r, pad));
+
+  // Fast path: two-bend L routes (HV and VH). Use whichever is clear.
+  for (const mid of [{ x: to.x, y: from.y }, { x: from.x, y: to.y }]) {
+    if (clear(from, mid, rects) && clear(mid, to, rects)) {
+      return simplify([from, mid, to]);
+    }
+  }
+
+  // A* on a uniform grid spanning the endpoints + obstacles (with margin).
+  const xs = [from.x, to.x, ...rects.flatMap((r) => [r.x, r.x + r.width])];
+  const ys = [from.y, to.y, ...rects.flatMap((r) => [r.y, r.y + r.height])];
+  const margin = grid * 3;
+  const minX = Math.min(...xs) - margin, maxX = Math.max(...xs) + margin;
+  const minY = Math.min(...ys) - margin, maxY = Math.max(...ys) + margin;
+  const cols = Math.ceil((maxX - minX) / grid) + 1;
+  const rows = Math.ceil((maxY - minY) / grid) + 1;
+  const gx = (c: number) => minX + c * grid, gy = (r: number) => minY + r * grid;
+  const snapC = (x: number) => Math.round((x - minX) / grid), snapR = (y: number) => Math.round((y - minY) / grid);
+
+  const blocked = (c: number, r: number) => {
+    const p = { x: gx(c), y: gy(r) };
+    return rects.some((rect) => ptInRect(p, rect));
+  };
+  const start = { c: snapC(from.x), r: snapR(from.y) }, goal = { c: snapC(to.x), r: snapR(to.y) };
+  // State key encodes (col, row, dir) so turn-penalty A* is correct
+  const DIRS = [[1, 0], [-1, 0], [0, 1], [0, -1]] as const;
+  // 5 directions: 0-3 = DIRS above, 4 = "no direction yet" (start)
+  const stateKey = (c: number, r: number, d: number) => (r * cols + c) * 5 + (d < 0 ? 4 : d);
+  const h = (c: number, r: number) => (Math.abs(c - goal.c) + Math.abs(r - goal.r)) * grid;
+
+  type N = { c: number; r: number; dir: number; g: number; f: number; prevKey: number | null };
+  const open: N[] = [];
+  const closed = new Set<number>();
+  // best cost per (c,r,dir) state
+  const best = new Map<number, number>();
+  // track path: state-key → node
+  const came = new Map<number, N>();
+
+  const sk0 = stateKey(start.c, start.r, -1);
+  const startNode: N = { ...start, dir: -1, g: 0, f: h(start.c, start.r), prevKey: null };
+  open.push(startNode);
+  best.set(sk0, 0);
+  came.set(sk0, startNode);
+
+  let goalNode: N | null = null;
+
+  while (open.length) {
+    let bi = 0;
+    for (let i = 1; i < open.length; i++) if (open[i].f < open[bi].f) bi = i;
+    const cur = open.splice(bi, 1)[0];
+    const curSk = stateKey(cur.c, cur.r, cur.dir);
+    if (closed.has(curSk)) continue;
+    closed.add(curSk);
+
+    if (cur.c === goal.c && cur.r === goal.r) { goalNode = cur; break; }
+
+    for (let d = 0; d < 4; d++) {
+      const nc = cur.c + DIRS[d][0], nr = cur.r + DIRS[d][1];
+      if (nc < 0 || nr < 0 || nc >= cols || nr >= rows) continue;
+      if (blocked(nc, nr)) continue;
+      const turn = cur.dir !== -1 && cur.dir !== d ? grid : 0;
+      const ng = cur.g + grid + turn;
+      const nsk = stateKey(nc, nr, d);
+      if (closed.has(nsk)) continue;
+      if ((best.get(nsk) ?? Infinity) <= ng) continue;
+      best.set(nsk, ng);
+      const nn: N = { c: nc, r: nr, dir: d, g: ng, f: ng + h(nc, nr), prevKey: curSk };
+      came.set(nsk, nn);
+      open.push(nn);
+    }
+  }
+
+  if (!goalNode) {
+    // Boxed in: return whichever L-path collides with fewer obstacles (best effort).
+    const hv = [from, { x: to.x, y: from.y }, to];
+    const vh = [from, { x: from.x, y: to.y }, to];
+    const hits = (p: Pt[]) => { let n = 0; for (let i = 1; i < p.length; i++) if (!clear(p[i - 1], p[i], rects)) n++; return n; };
+    return simplify(hits(hv) <= hits(vh) ? hv : vh);
+  }
+
+  const pts: Pt[] = [];
+  let n: N | undefined = goalNode;
+  while (n) {
+    pts.push({ x: gx(n.c), y: gy(n.r) });
+    n = n.prevKey != null ? came.get(n.prevKey) : undefined;
+  }
+  pts.reverse();
+  // Build the full path: actual from → grid path → actual to.
+  // The grid path starts/ends at snapped coords, which may not equal from/to.
+  // Connect them orthogonally: replace pts[0] with from, pts[last] with to,
+  // but insert bend points as needed to keep every segment axis-aligned.
+  const full: Pt[] = [from];
+  // Skip the first grid point if it equals from (exact match after snap)
+  const iFirst = (pts.length > 0 && pts[0].x === from.x && pts[0].y === from.y) ? 1 : 0;
+  // Skip the last grid point if it equals to
+  const iLast = (pts.length > iFirst && pts[pts.length - 1].x === to.x && pts[pts.length - 1].y === to.y)
+    ? pts.length - 1 : pts.length;
+  // Connect from → first grid point orthogonally (mirror of the tail connector):
+  // if the first grid point differs from `from` in BOTH axes, insert a bend so the
+  // approach segment is never diagonal. Align the bend with the A* path's first step.
+  if (iFirst < pts.length && pts[iFirst].x !== from.x && pts[iFirst].y !== from.y) {
+    const nextPt = iFirst + 1 < iLast ? pts[iFirst + 1] : null;
+    if (nextPt && nextPt.x === pts[iFirst].x) full.push({ x: pts[iFirst].x, y: from.y });
+    else full.push({ x: from.x, y: pts[iFirst].y });
+  }
+  for (let i = iFirst; i < iLast; i++) full.push(pts[i]);
+  // Connect last point in full → to orthogonally
+  const last = full[full.length - 1];
+  if (last.x !== to.x || last.y !== to.y) {
+    // Need an orthogonal connector: try horizontal-then-vertical or vertical-then-horizontal
+    if (last.x !== to.x && last.y !== to.y) {
+      // Insert a bend point: use the direction of the last A* segment to decide
+      // Last segment direction
+      const prevPt = full.length >= 2 ? full[full.length - 2] : null;
+      if (prevPt && prevPt.x === last.x) {
+        // Last segment was vertical → continue with horizontal bend
+        full.push({ x: to.x, y: last.y });
+      } else {
+        // Last segment was horizontal → continue with vertical bend
+        full.push({ x: last.x, y: to.y });
+      }
+    }
+    full.push(to);
+  }
+  return simplify(full);
+}
+
+// Drop collinear / duplicate points.
+function simplify(pts: Pt[]): Pt[] {
+  const out: Pt[] = [];
+  for (const p of pts) {
+    const last = out[out.length - 1];
+    if (last && last.x === p.x && last.y === p.y) continue;
+    if (out.length >= 2) {
+      const a = out[out.length - 2], b = out[out.length - 1];
+      if ((a.x === b.x && b.x === p.x) || (a.y === b.y && b.y === p.y)) { out[out.length - 1] = p; continue; }
+    }
+    out.push(p);
+  }
+  return out;
+}

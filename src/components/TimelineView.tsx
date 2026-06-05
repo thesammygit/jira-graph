@@ -4,7 +4,6 @@ import type { GraphState } from '../state/graphReducer';
 import { buildTimeline } from '../graph/timeline';
 import './timeline.css';
 
-const KIND_COLOR: Record<string, string> = { epic: '#7b61ff', story: '#3ebd93', task: '#2186eb', subtask: '#a0aec0', bug: '#e12d39', other: '#7b8794' };
 const ROW_H = 38, BAR_H = 22;
 const LABEL_W = 220; // left-gutter width
 
@@ -74,21 +73,21 @@ export function TimelineView({ graph, state, onSelect }: { graph: Graph; state: 
         {/* ── Arrowhead marker def ── */}
         <defs>
           <marker id="tl-arrow" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
-            <path d="M0,0 L0,6 L8,3 z" fill="#e12d39" opacity={0.7} />
+            <path d="M0,0 L0,6 L8,3 z" fill="var(--rel-blocks)" opacity={0.7} />
           </marker>
         </defs>
 
         {/* ── Date axis ── */}
         <g className="tl-axis">
           {/* Axis baseline */}
-          <line x1={LABEL_W} y1={AXIS_H - 1} x2={LABEL_W + width} y2={AXIS_H - 1} stroke="#e1e7ef" strokeWidth={1} />
+          <line x1={LABEL_W} y1={AXIS_H - 1} x2={LABEL_W + width} y2={AXIS_H - 1} stroke="var(--border)" strokeWidth={1} />
           {months.map((m, i) => (
             <g key={i}>
               {/* Vertical gridline */}
               <line
                 x1={LABEL_W + m.x} y1={0}
                 x2={LABEL_W + m.x} y2={svgH}
-                stroke="#e1e7ef" strokeWidth={1}
+                stroke="var(--border)" strokeWidth={1}
                 strokeDasharray="3 4"
               />
               {/* Month label */}
@@ -113,7 +112,7 @@ export function TimelineView({ graph, state, onSelect }: { graph: Graph; state: 
                   x={bx} y={by + (ROW_H - BAR_H) / 2}
                   width={barW} height={BAR_H}
                   rx={6}
-                  fill={KIND_COLOR[b.node.type.kind]}
+                  fill={`var(--kind-${b.node.type.kind})`}
                   opacity={0.88}
                   className="tl-bar-rect"
                 />

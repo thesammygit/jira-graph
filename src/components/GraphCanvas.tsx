@@ -1,7 +1,7 @@
 import { useEffect, useMemo } from 'react';
 import {
   ReactFlow, ReactFlowProvider, Background, Controls, MiniMap, useReactFlow,
-  type Node, type NodeTypes,
+  type Node, type NodeTypes, type EdgeTypes,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import type { Graph } from '../core/model';
@@ -9,14 +9,20 @@ import type { GraphState } from '../state/graphReducer';
 import { layouts } from '../graph/layouts';
 import { toFlowElements } from '../graph/flow-elements';
 import { TicketNode } from './TicketNode';
+import { RoutedEdge } from './RoutedEdge';
+import { RoutingContext } from './routing-context';
 
 // TicketNode has a typed `data` prop narrower than React Flow's `Record<string, unknown>`.
 // Cast via `unknown` so tsc accepts it in nodeTypes without weakening TicketNode's prop type.
 const nodeTypes = { ticket: TicketNode } as unknown as NodeTypes;
+// Defined at module scope (stable identity, available on first paint) so React Flow
+// never logs "edge type 'routed' not found" during the initial render race.
+const edgeTypes = { routed: RoutedEdge } as unknown as EdgeTypes;
 
-interface CanvasProps { graph: Graph; state: GraphState; onSelect: (key: string) => void }
+export interface EdgeClickPayload { id: string; x: number; y: number; srcKey: string; tgtKey: string; relation: string; label: string }
+interface CanvasProps { graph: Graph; state: GraphState; onSelect: (key: string) => void; onEdgeClick?: (p: EdgeClickPayload) => void }
 
-function Canvas({ graph, state, onSelect }: CanvasProps) {
+function Canvas({ graph, state, onSelect, onEdgeClick }: CanvasProps) {
   const { nodes, edges } = useMemo(() => {
     const positions = layouts[state.layout](graph);
     return toFlowElements(graph, positions, state);
@@ -32,19 +38,29 @@ function Canvas({ graph, state, onSelect }: CanvasProps) {
     return () => cancelAnimationFrame(id);
   }, [state.layout, graph, fitView]);
 
+  const obstacles = useMemo(
+    () => nodes.map((n) => ({ id: n.id, rect: { x: n.position.x, y: n.position.y, width: 210, height: 108 } })),
+    [nodes],
+  );
+
   return (
-    <ReactFlow
-      nodes={nodes}
-      edges={edges}
-      nodeTypes={nodeTypes}
-      fitView
-      onNodeClick={(_, n: Node) => onSelect(n.id)}
-      proOptions={{ hideAttribution: true }}
-    >
-      <Background />
-      <Controls />
-      <MiniMap pannable zoomable />
-    </ReactFlow>
+    <RoutingContext.Provider value={obstacles}>
+      <ReactFlow
+        nodes={nodes}
+        edges={edges}
+        nodeTypes={nodeTypes}
+        edgeTypes={edgeTypes}
+        fitView
+        onNodeClick={(_, n: Node) => onSelect(n.id)}
+        onEdgeClick={(e, edge) => onEdgeClick?.({ id: edge.id, x: e.clientX, y: e.clientY, srcKey: (edge.data as any)?.srcKey ?? edge.source, tgtKey: (edge.data as any)?.tgtKey ?? edge.target, relation: (edge.data as any)?.rel ?? '', label: (edge.data as any)?.label ?? '' })}
+        proOptions={{ hideAttribution: true }}
+        style={{ background: 'var(--bg)' }}
+      >
+        <Background color="var(--bg-grid)" />
+        <Controls />
+        <MiniMap pannable zoomable style={{ background: 'var(--surface)' }} />
+      </ReactFlow>
+    </RoutingContext.Provider>
   );
 }
 

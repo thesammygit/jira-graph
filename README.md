@@ -4,11 +4,21 @@ An interactive Jira relationship visualizer built as a static SPA (Vite + React 
 
 ---
 
-## Screenshot
+## Screenshots
 
-![jira-graph in action](docs/screenshot.png)
+Dark theme (default), grouped mode with orthogonal routed cross-links:
 
-> To regenerate: run the app locally (`npm run dev`), configure the dataset you want, and take a screenshot.
+![jira-graph — dark theme, grouped mode](docs/screenshot-dark.png)
+
+Light theme, graph mode (force layout):
+
+![jira-graph — light theme, graph mode](docs/screenshot-light.png)
+
+Click any connecting line for a relationship popup:
+
+![Edge relationship popup](docs/screenshot-edge-popup.png)
+
+> To regenerate: run the app locally (`npm run dev`), pick a theme/mode/dataset, and take a screenshot.
 
 ---
 
@@ -22,12 +32,28 @@ An interactive Jira relationship visualizer built as a static SPA (Vite + React 
 - **Rich ticket nodes** — each node shows the issue key, summary, type icon, status badge, and assignee.
 - **Detail panel** — click any node to open a side panel with full description (ADF rich text rendered as plain paragraphs), linked tickets, and metadata.
 - **Jira v2 / v3 + Epic Link compatibility** — normalizer handles `fields.parent` (Cloud v3) and the legacy "Epic Link" custom field (Server v2), detected at runtime by field name. When Epic Link is absent the epic edges simply disappear — no errors, no broken UI.
+- **Light / dark themes** — a CSS-variable theme system with a sidebar toggle (defaults to dark, persisted to `localStorage`). Every surface, including the React Flow chrome, follows the theme.
+- **Left sidebar controls** — modes, contextual depth/layout, filters, the relationship legend, search, dataset picker, and theme toggle live in one tidy sidebar; the canvas is full-width.
+- **Orthogonal edge routing** — a hand-rolled A\* router treats every ticket/container as an obstacle and draws right-angle paths *around* them: a connecting line never crosses under a ticket.
+- **Relationship-colored edges + legend** — edges are colored by relationship (blocks, relates, duplicates, clones, hierarchy) from a single palette; the sidebar legend lists the relationships present and toggles their visibility.
+- **Click-a-line popup** — click any edge for a popover showing both tickets, the relationship with direction, plain-English phrasing, focus actions, and open-in-Jira links.
+
+---
+
+## Design, theming & edge routing
+
+- **Theme system** — `src/theme/tokens.css` defines CSS custom properties under `[data-theme="dark"]` / `[data-theme="light"]`; `src/theme/useTheme.ts` holds the choice (default dark, `localStorage`-persisted, sets `data-theme` on `<html>`). Components reference tokens only, so the toggle reskins the whole app, including React Flow's background/minimap/controls.
+- **Sidebar** — `src/components/Sidebar.tsx` replaced the old top toolbar as the single control surface.
+- **Edge routing** — `src/graph/routing.ts` is a pure, unit-tested orthogonal A\* router: `routeOrthogonal(from, to, obstacles)` returns right-angle waypoints that avoid every obstacle rect (guaranteed: no segment crosses a ticket; falls back to a direct L-path when clear). `src/components/RoutedEdge.tsx` renders it; the canvases supply obstacle rects (containers included) via `RoutingContext`. Zero new dependencies.
+- **Relationship palette** — `src/graph/relation-colors.ts` is the single source of truth mapping relationship → theme-aware color + label, feeding both edges and the legend.
+
+Design spec: [`docs/superpowers/specs/2026-06-05-jira-graph-redesign-routing-design.md`](docs/superpowers/specs/2026-06-05-jira-graph-redesign-routing-design.md) · Plan: [`docs/superpowers/plans/2026-06-05-jira-graph-redesign-routing.md`](docs/superpowers/plans/2026-06-05-jira-graph-redesign-routing.md)
 
 ---
 
 ## View modes
 
-Four switchable views, all rendered from the same normalized graph, so big projects stay legible. Switch between them in the toolbar.
+Four switchable views, all rendered from the same normalized graph, so big projects stay legible. Switch between them in the sidebar.
 
 - **Graph** — the free-form relationship graph (hierarchical / force / hybrid layouts, depth slider, filters, search).
 - **Grouped** — tickets collapse into nested **container blocks** (epic ▸ story ▸ task, depth selectable 1–3). Each container is collapsible; cross-container links are drawn ticket-to-ticket. The clearest view for "what's in this epic and how epics connect."
@@ -72,7 +98,7 @@ The visualization knows nothing about Jira. It consumes a single normalized `{ n
                          │ React Flow nodes/edges
                          ▼
 ┌────────────────────────────────────────────────┐
-│  React UI (GraphCanvas, Toolbar, DetailPanel,  │
+│  React UI (Sidebar, GraphCanvas, DetailPanel,  │
 │            TicketNode)                          │
 └────────────────────────────────────────────────┘
 ```
@@ -108,7 +134,7 @@ All layout algorithms (hierarchical, force, hybrid), application state managemen
 ```bash
 npm install        # install dependencies from lockfile
 npm run dev        # start Vite dev server (http://localhost:5173)
-npm test           # run Vitest unit tests (70 tests)
+npm test           # run Vitest unit tests (81 tests)
 npm run build      # type-check + Vite production build → dist/
 ```
 
@@ -172,7 +198,7 @@ src/
     ├── TreeView.tsx           — collapsible outline (tree mode)
     ├── TimelineView.tsx       — Gantt view (timeline mode)
     ├── ViewModeSwitch.tsx     — graph/grouped/tree/timeline + depth control
-    ├── Toolbar.tsx            — layout picker, filters, depth slider, search, mode toggle
+    ├── Sidebar.tsx            — modes, filters, legend, search, dataset, theme toggle
     ├── TicketNode.tsx         — custom React Flow node (full + compact variants)
     └── DetailPanel.tsx        — side panel: description, links, metadata
 ```
@@ -181,6 +207,6 @@ src/
 
 ## Testing
 
-The pure-logic core — `normalize` (incl. date fields), depth expansion, all layouts, grouping, tree building, timeline geometry, `MockProvider`, `graphReducer`, `flow-elements`, and `grouped-elements` — is covered by **70 Vitest unit tests**. Tests run in Node (no browser required) and complete in under a second.
+The pure-logic core — `normalize` (incl. date fields), depth expansion, all layouts, grouping, tree building, timeline geometry, `MockProvider`, `graphReducer`, `flow-elements`, and `grouped-elements` — is covered by **81 Vitest unit tests**. Tests run in Node (no browser required) and complete in under a second.
 
 The thin React layer (component rendering, user interactions, visual output) is verified by running the app: `npm run dev` spins up the full SPA against the bundled fixtures, and `npm run build` confirms the production bundle compiles and tree-shakes cleanly.

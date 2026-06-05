@@ -36,7 +36,10 @@ export function Sidebar(props: {
         ))}
       </nav>
 
-      <TicketTypeahead graph={graph} dispatch={dispatch} />
+      <div className="sb-section">
+        <span className="sb-label">Focus a ticket</span>
+        <TicketTypeahead graph={graph} dispatch={dispatch} />
+      </div>
 
       {state.mode === 'focus' && (
         <div className="sb-section">
@@ -48,8 +51,11 @@ export function Sidebar(props: {
         </div>
       )}
 
-      <input className="sb-search" placeholder="Search…" value={state.search}
-        onChange={(e) => dispatch({ type: 'setSearch', query: e.target.value })} />
+      <div className="sb-section">
+        <span className="sb-label">Search (highlight)</span>
+        <input className="sb-search" placeholder="Search…" value={state.search}
+          onChange={(e) => dispatch({ type: 'setSearch', query: e.target.value })} />
+      </div>
 
       {state.viewMode === 'grouped' && (
         <div className="sb-section"><span className="sb-label">Depth</span>

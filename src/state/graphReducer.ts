@@ -71,7 +71,7 @@ export function reducer(state: GraphState, action: Action): GraphState {
     case 'toggleStatus': return { ...state, hiddenStatuses: toggle(state.hiddenStatuses, action.status) };
     case 'toggleRelation': return { ...state, hiddenRelations: toggle(state.hiddenRelations, action.relation) };
     case 'setSearch': return { ...state, search: action.query };
-    case 'select': return { ...state, selectedKey: action.key, selectedEdge: null };
+    case 'select': return { ...state, selectedKey: action.key, selectedEdge: null, nodePopup: null };
     case 'selectEdge': return { ...state, selectedEdge: { id: action.id, x: action.x, y: action.y, srcKey: action.srcKey, tgtKey: action.tgtKey, relation: action.relation, label: action.label }, selectedKey: null, nodePopup: null };
     case 'clearEdge': return { ...state, selectedEdge: null };
     case 'setViewMode': return { ...state, viewMode: action.viewMode };

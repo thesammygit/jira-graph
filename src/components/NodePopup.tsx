@@ -6,6 +6,15 @@ import { ticketRelationships } from '../graph/relationships';
 import { relationStyle } from '../graph/relation-colors';
 import './node-popup.css';
 
+// Keep the (300px-wide, centered) popup fully on screen even when a ticket near an
+// edge is clicked. The CSS transform centers horizontally and offsets 12px down.
+function clampToViewport(x: number, y: number): { left: number; top: number } {
+  const halfW = 160, popH = 340;
+  const w = typeof window !== 'undefined' ? window.innerWidth : 1280;
+  const h = typeof window !== 'undefined' ? window.innerHeight : 800;
+  return { left: Math.min(Math.max(x, halfW), w - halfW), top: Math.min(Math.max(y, 10), Math.max(10, h - popH)) };
+}
+
 export function NodePopup({ graph, state, dispatch }: { graph: Graph; state: GraphState; dispatch: Dispatch<Action> }) {
   const sel = state.nodePopup;
   useEffect(() => {
@@ -21,7 +30,7 @@ export function NodePopup({ graph, state, dispatch }: { graph: Graph; state: Gra
   return (
     <>
       <div className="np-scrim" onClick={() => dispatch({ type: 'closeNode' })} />
-      <div className="np-pop" style={{ left: sel.x, top: sel.y }} role="dialog">
+      <div className="np-pop" style={clampToViewport(sel.x, sel.y)} role="dialog">
         <div className="np-head">
           <span className="np-k" style={{ color: `var(--kind-${node.type.kind})` }}>{node.key}</span>
           <span className="np-type">{node.type.name}{node.priority ? ` · ${node.priority}` : ''}</span>

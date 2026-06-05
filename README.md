@@ -110,7 +110,7 @@ The visualization knows nothing about Jira. It consumes a single normalized `{ n
                          │ React Flow nodes/edges
                          ▼
 ┌────────────────────────────────────────────────┐
-│  React UI (Sidebar, GraphCanvas, DetailPanel,  │
+│  React UI (Sidebar, GraphCanvas, NodePopup,    │
 │            TicketNode)                          │
 └────────────────────────────────────────────────┘
 ```
@@ -210,9 +210,10 @@ src/
     ├── TreeView.tsx           — collapsible outline (tree mode)
     ├── TimelineView.tsx       — Gantt view (timeline mode)
     ├── ViewModeSwitch.tsx     — graph/grouped/tree/timeline + depth control
-    ├── Sidebar.tsx            — modes, filters, legend, search, dataset, theme toggle
-    ├── TicketNode.tsx         — custom React Flow node (full + compact variants)
-    └── DetailPanel.tsx        — side panel: description, links, metadata
+    ├── Sidebar.tsx            — modes, project/assignee filters, legend, search, typeahead, dataset, theme
+    ├── TicketNode.tsx         — custom React Flow node (full + compact, epic badge, focal ring)
+    ├── NodePopup.tsx          — click-a-ticket overview (title, description, relationships, focus)
+    └── EdgePopup.tsx          — click-a-line relationship popover
 ```
 
 ---

@@ -1,9 +1,18 @@
 .toolbar { display: flex; flex-wrap: wrap; gap: 14px; align-items: center; padding: 10px 14px; background: #fff; border-bottom: 1px solid #e1e7ef; font-family: ui-sans-serif, system-ui; }
-.tb-search { padding: 6px 10px; border: 1px solid #cbd2d9; border-radius: 8px; min-width: 220px; font-size: 13px; }
+.tb-search { padding: 6px 10px; border: 1px solid #cbd2d9; border-radius: 8px; min-width: 220px; font-size: 13px; transition: border-color 150ms ease, box-shadow 150ms ease; }
+.tb-search:focus { outline: none; border-color: #2186eb; box-shadow: 0 0 0 2px rgba(33,134,235,.15); }
 .tb-group { display: flex; align-items: center; gap: 6px; }
 .tb-label { font-size: 10px; text-transform: uppercase; letter-spacing: .5px; color: #7b8794; }
-.toolbar button { font-size: 12px; padding: 4px 9px; border: 1px solid #cbd2d9; border-radius: 7px; background: #f5f7fa; color: #52606d; cursor: pointer; }
+.toolbar button { font-size: 12px; padding: 4px 9px; border: 1px solid #cbd2d9; border-radius: 7px; background: #f5f7fa; color: #52606d; cursor: pointer; transition: background 120ms ease, border-color 120ms ease, color 120ms ease; }
+.toolbar button:hover:not(.on) { background: #edf2f7; border-color: #b3bec9; }
 .toolbar button.on { background: #2186eb; border-color: #2186eb; color: #fff; }
+
+/* ── Segmented control ───────────────────────────────────────────────── */
+.segmented { display: flex; border: 1px solid #cbd2d9; border-radius: 8px; overflow: hidden; }
+.segmented button { border: none; border-right: 1px solid #cbd2d9; border-radius: 0; background: #f5f7fa; color: #52606d; font-size: 12px; padding: 4px 10px; cursor: pointer; transition: background 120ms ease, color 120ms ease; }
+.segmented button:last-child { border-right: none; }
+.segmented button:hover:not(.on) { background: #edf2f7; }
+.segmented button.on { background: #2186eb; color: #fff; }
 .detail { position: absolute; top: 0; right: 0; width: 300px; height: 100%; background: #fff; border-left: 1px solid #e1e7ef; box-shadow: -6px 0 18px rgba(16,42,67,.08); padding: 18px; overflow-y: auto; font-family: ui-sans-serif, system-ui; z-index: 5; }
 .detail-close { position: absolute; top: 10px; right: 12px; border: none; background: none; font-size: 20px; cursor: pointer; color: #7b8794; }
 .detail-key { font: 700 12px ui-monospace, monospace; color: #2186eb; }

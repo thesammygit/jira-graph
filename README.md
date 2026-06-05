@@ -25,6 +25,27 @@ An interactive Jira relationship visualizer built as a static SPA (Vite + React 
 
 ---
 
+## View modes
+
+Four switchable views, all rendered from the same normalized graph, so big projects stay legible. Switch between them in the toolbar.
+
+- **Graph** — the free-form relationship graph (hierarchical / force / hybrid layouts, depth slider, filters, search).
+- **Grouped** — tickets collapse into nested **container blocks** (epic ▸ story ▸ task, depth selectable 1–3). Each container is collapsible; cross-container links are drawn ticket-to-ticket. The clearest view for "what's in this epic and how epics connect."
+
+  ![Grouped mode](docs/screenshot-grouped.png)
+
+- **Tree** — a compact collapsible outline with inline relationship badges (⛔ blocks, ↔ relates) you can click to jump. The densest view for very large projects.
+
+  ![Tree mode](docs/screenshot-tree.png)
+
+- **Timeline** — a Gantt view: bars on a date axis grouped by epic, `blocks` dependencies drawn as arrows. Needs a time dimension, so the normalizer also reads optional `startDate` / `dueDate` / `sprint` from Jira (`fields.duedate` and the Sprint custom field, feature-detected by name; synthesized into the mock fixtures). When a dataset has no dates the mode shows a friendly empty state.
+
+  ![Timeline mode](docs/screenshot-timeline.png)
+
+Design spec: [`docs/superpowers/specs/2026-06-05-jira-graph-view-modes-design.md`](docs/superpowers/specs/2026-06-05-jira-graph-view-modes-design.md) · Plan: [`docs/superpowers/plans/2026-06-05-jira-graph-view-modes.md`](docs/superpowers/plans/2026-06-05-jira-graph-view-modes.md)
+
+---
+
 ## Architecture
 
 The visualization knows nothing about Jira. It consumes a single normalized `{ nodes, edges }` model; a `DataProvider` seam is the only coupling point.
@@ -87,7 +108,7 @@ All layout algorithms (hierarchical, force, hybrid), application state managemen
 ```bash
 npm install        # install dependencies from lockfile
 npm run dev        # start Vite dev server (http://localhost:5173)
-npm test           # run Vitest unit tests (43 tests)
+npm test           # run Vitest unit tests (70 tests)
 npm run build      # type-check + Vite production build → dist/
 ```
 
@@ -129,20 +150,30 @@ src/
 ├── graph/
 │   ├── depth.ts              — BFS neighborhood expansion for focus mode
 │   ├── flow-elements.ts      — maps NormalizedGraph → React Flow nodes/edges
+│   ├── grouping.ts           — containment grouping by depth (grouped mode)
+│   ├── grouped-elements.ts   — grouping → React Flow compound nodes/edges
+│   ├── tree.ts               — graph → collapsible tree rows + badges (tree mode)
+│   ├── timeline.ts           — dated nodes → Gantt geometry (timeline mode)
 │   ├── layouts/
 │   │   ├── hierarchical.ts   — top-down tree layout
 │   │   ├── force.ts          — spring/repulsion force layout
 │   │   ├── hybrid.ts         — hierarchical spine + force leaf clusters
+│   │   ├── grouped.ts        — nested container layout (grouped mode)
 │   │   ├── shared.ts         — shared layout utilities
 │   │   ├── types.ts          — layout type definitions
 │   │   └── index.ts          — layout registry / selector
 │   └── (*.test.ts files alongside each module)
 ├── state/
-│   └── graphReducer.ts       — useReducer state machine for all interaction
+│   └── graphReducer.ts       — useReducer state machine (incl. viewMode/groupDepth/collapsed)
 └── components/
-    ├── GraphCanvas.tsx        — React Flow canvas wrapper
+    ├── GraphCanvas.tsx        — React Flow canvas wrapper (graph mode)
+    ├── GroupedCanvas.tsx      — nested container view (grouped mode)
+    ├── ContainerNode.tsx      — grouped container node
+    ├── TreeView.tsx           — collapsible outline (tree mode)
+    ├── TimelineView.tsx       — Gantt view (timeline mode)
+    ├── ViewModeSwitch.tsx     — graph/grouped/tree/timeline + depth control
     ├── Toolbar.tsx            — layout picker, filters, depth slider, search, mode toggle
-    ├── TicketNode.tsx         — custom React Flow node (key, summary, type, status, assignee)
+    ├── TicketNode.tsx         — custom React Flow node (full + compact variants)
     └── DetailPanel.tsx        — side panel: description, links, metadata
 ```
 
@@ -150,6 +181,6 @@ src/
 
 ## Testing
 
-The pure-logic core — `normalize`, depth expansion, all three layouts, `MockProvider`, `graphReducer`, and `flow-elements` — is covered by **43 Vitest unit tests**. Tests run in Node (no browser required) and complete in under a second.
+The pure-logic core — `normalize` (incl. date fields), depth expansion, all layouts, grouping, tree building, timeline geometry, `MockProvider`, `graphReducer`, `flow-elements`, and `grouped-elements` — is covered by **70 Vitest unit tests**. Tests run in Node (no browser required) and complete in under a second.
 
 The thin React layer (component rendering, user interactions, visual output) is verified by running the app: `npm run dev` spins up the full SPA against the bundled fixtures, and `npm run build` confirms the production bundle compiles and tree-shakes cleanly.

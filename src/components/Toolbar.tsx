@@ -2,6 +2,7 @@ import type { Dispatch } from 'react';
 import type { Action, GraphState } from '../state/graphReducer';
 import type { LayoutKind } from '../graph/layouts';
 import type { IssueKind } from '../core/model';
+import { ViewModeSwitch } from './ViewModeSwitch';
 import './panels.css';
 
 const LAYOUTS: LayoutKind[] = ['hybrid', 'hierarchical', 'force'];
@@ -13,6 +14,8 @@ export function Toolbar({ state, dispatch }: { state: GraphState; dispatch: Disp
     <div className="toolbar">
       <input className="tb-search" placeholder="Search key or summary…" value={state.search}
         onChange={(e) => dispatch({ type: 'setSearch', query: e.target.value })} />
+
+      <ViewModeSwitch state={state} dispatch={dispatch} />
 
       <div className="tb-group">
         <span className="tb-label">Mode</span>

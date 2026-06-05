@@ -66,7 +66,7 @@ jira-graph/
 - [ ] **Step 1: Install dependencies (pinned exact)**
 
 ```bash
-cd /Users/sam./Desktop/jira-graph
+cd .
 npm init -y
 npm install --save-exact react react-dom @xyflow/react
 npm install --save-dev --save-exact vite @vitejs/plugin-react typescript vitest @types/react @types/react-dom

@@ -4,6 +4,7 @@ import type { Grouping, GroupContainer } from './grouping';
 import type { GroupedLayout } from './layouts/grouped';
 import type { GraphState } from '../state/graphReducer';
 import { relationStyle } from './relation-colors';
+import { isNodeVisible } from './visible';
 
 export function toGroupedElements(graph: Graph, grouping: Grouping, layout: GroupedLayout, state: GraphState): { nodes: Node[]; edges: Edge[] } {
   // Map each ticket to the container that owns it, and whether it is currently visible.
@@ -28,8 +29,6 @@ export function toGroupedElements(graph: Graph, grouping: Grouping, layout: Grou
     return chain.slice(1).some((a) => state.collapsed.has(a));
   };
 
-  const filteredOut = (kind: string, cat: string) => state.hiddenTypes.has(kind as any) || state.hiddenStatuses.has(cat as any);
-
   // Build nodes.
   const nodes: Node[] = [];
   const nodeByKey = new Map(graph.nodes.map((n) => [n.key, n]));
@@ -40,7 +39,7 @@ export function toGroupedElements(graph: Graph, grouping: Grouping, layout: Grou
     nodes.push({
       id: pc.key, type: 'container', position: { x: pc.x, y: pc.y },
       ...(pc.parentKey ? { parentId: pc.parentKey, extent: 'parent' as const } : {}),
-      data: { node: header, depth: pc.depth, collapsed: state.collapsed.has(pc.key), width: pc.width, height: pc.height },
+      data: { node: header, depth: pc.depth, collapsed: state.collapsed.has(pc.key), focal: state.focusKey === pc.key, width: pc.width, height: pc.height },
       style: { width: pc.width, height: pc.height },
     });
   }
@@ -48,12 +47,12 @@ export function toGroupedElements(graph: Graph, grouping: Grouping, layout: Grou
     const ownerCollapsed = state.collapsed.has(pm.parentKey) || isUnderCollapse(pm.parentKey);
     if (ownerCollapsed) continue;
     const node = nodeByKey.get(pm.key); if (!node) continue;
-    if (filteredOut(node.type.kind, node.status.category)) continue;
+    if (!isNodeVisible(node, state)) continue;
     visibleMembers.add(pm.key);
     nodes.push({
       id: pm.key, type: 'ticket', parentId: pm.parentKey, extent: 'parent',
       position: { x: pm.x, y: pm.y },
-      data: { node, selected: state.selectedKey === pm.key, search: state.search, compact: true },
+      data: { node, selected: state.selectedKey === pm.key, search: state.search, compact: true, focal: state.focusKey === pm.key },
     });
   }
 

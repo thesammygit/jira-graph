@@ -2,7 +2,7 @@ import { initialState, reducer } from './graphReducer';
 
 test('defaults: graph mode, depth 2, nothing collapsed', () => {
   expect(initialState.viewMode).toBe('graph');
-  expect(initialState.groupDepth).toBe(2);
+  expect(initialState.groupDepth).toBe(4);
   expect(initialState.collapsed.size).toBe(0);
 });
 

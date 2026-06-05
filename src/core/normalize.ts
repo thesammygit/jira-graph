@@ -1,5 +1,6 @@
 import type { Capabilities, Graph, GraphEdge, GraphNode } from './model';
 import { hierarchyLevelFor, initialsFrom, kindFromIssuetype, statusCategoryFrom } from './jira-fields';
+import { adfToText } from './adf';
 
 function hierarchyEdge(source: string, target: string, relation: string, raw: unknown): GraphEdge {
   const label = relation === 'subtask' ? 'subtask of' : relation === 'epic' ? 'epic' : 'parent';
@@ -60,6 +61,9 @@ export function normalizeIssue(raw: any, caps: Capabilities): { node: GraphNode;
     hierarchyLevel: hierarchyLevelFor(kind),
     url: `${caps.baseUrl}/browse/${raw.key}`,
     raw,
+    project: f.project ? { key: f.project.key, name: f.project.name ?? f.project.key }
+                       : { key: String(raw.key).split('-')[0], name: String(raw.key).split('-')[0] },
+    description: adfToText(f.description) || undefined,
   };
   const edges: GraphEdge[] = [];
   edges.push(...hierarchyEdges(raw, kind, caps), ...linkEdges(raw));
@@ -76,5 +80,21 @@ export function normalizeIssues(rawIssues: any[], caps: Capabilities): Graph {
   }
   const keys = new Set(nodes.map((n) => n.key));
   const edges = [...edgeMap.values()].filter((e) => keys.has(e.source) && keys.has(e.target));
+
+  // Resolve each non-epic node's epic ancestor from hierarchy edges.
+  const parentOf = new Map<string, string>();
+  for (const e of edges) if (e.kind === 'hierarchy') parentOf.set(e.target, e.source);
+  const byKey = new Map(nodes.map((n) => [n.key, n]));
+  for (const node of nodes) {
+    if (node.type.kind === 'epic') continue;
+    let cur: string | undefined = parentOf.get(node.key);
+    let guard = 0;
+    while (cur && guard++ < 20) {
+      const p = byKey.get(cur);
+      if (p && p.type.kind === 'epic') { node.epicKey = p.key; node.epicSummary = p.summary; break; }
+      cur = parentOf.get(cur);
+    }
+  }
+
   return { nodes, edges };
 }

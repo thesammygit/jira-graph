@@ -38,11 +38,12 @@
   letter-spacing: .3px;
 }
 
-/* ── Bar hover ───────────────────────────────────────────────────────── */
+/* ── Bar hover + focal highlight ─────────────────────────────────────── */
 .tl-bar { cursor: pointer; }
 .tl-bar .tl-bar-rect { transition: opacity 120ms ease, filter 120ms ease; }
 .tl-bar:hover .tl-bar-rect { opacity: 1 !important; filter: brightness(1.1); }
 .tl-bar:hover .tl-key { fill: var(--ink); }
+.tl-bar-focal .tl-bar-rect { stroke: var(--accent); stroke-width: 2.5; }
 
 /* ── Dependency arrows ───────────────────────────────────────────────── */
 .tl-dep {

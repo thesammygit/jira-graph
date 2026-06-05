@@ -19,7 +19,7 @@ const nodeTypes = { ticket: TicketNode, container: ContainerNode } as unknown as
 const edgeTypes = { routed: RoutedEdge } as unknown as EdgeTypes;
 
 export interface EdgeClickPayload { id: string; x: number; y: number; srcKey: string; tgtKey: string; relation: string; label: string }
-function Canvas({ graph, state, dispatch, onSelect, onEdgeClick }: { graph: Graph; state: GraphState; dispatch: Dispatch<Action>; onSelect: (k: string) => void; onEdgeClick?: (p: EdgeClickPayload) => void }) {
+function Canvas({ graph, state, dispatch, onSelect, onEdgeClick, onNodeOpen }: { graph: Graph; state: GraphState; dispatch: Dispatch<Action>; onSelect: (k: string) => void; onEdgeClick?: (p: EdgeClickPayload) => void; onNodeOpen?: (id: string, x: number, y: number) => void }) {
   const { nodes, edges } = useMemo(() => {
     const grouping = groupGraph(graph, state.groupDepth);
     const { nodes, edges } = toGroupedElements(graph, grouping, layoutGrouped(grouping), state);
@@ -27,7 +27,7 @@ function Canvas({ graph, state, dispatch, onSelect, onEdgeClick }: { graph: Grap
     const wired = nodes.map((n) => n.type === 'container'
       ? { ...n, data: { ...n.data, onToggle: (k: string) => dispatch({ type: 'toggleCollapsed', key: k }) } } : n);
     return { nodes: wired, edges };
-  }, [graph, state.groupDepth, state.collapsed, state.hiddenTypes, state.hiddenStatuses, state.hiddenRelations, state.selectedKey, state.search, dispatch]);
+  }, [graph, state.groupDepth, state.collapsed, state.hiddenTypes, state.hiddenStatuses, state.hiddenProjects, state.hiddenAssignees, state.hiddenRelations, state.selectedKey, state.search, state.focusKey, dispatch]);
 
   const { fitView } = useReactFlow();
   useEffect(() => { const id = requestAnimationFrame(() => fitView({ duration: 300, padding: 0.15 })); return () => cancelAnimationFrame(id); }, [graph, state.groupDepth, fitView]);
@@ -50,7 +50,8 @@ function Canvas({ graph, state, dispatch, onSelect, onEdgeClick }: { graph: Grap
   return (
     <RoutingContext.Provider value={obstacles}>
       <ReactFlow nodes={nodes} edges={edges} nodeTypes={nodeTypes} edgeTypes={edgeTypes} fitView
-        onNodeClick={(_, n: Node) => n.type === 'ticket' && onSelect(n.id)}
+        nodesConnectable={false}
+        onNodeClick={(e, n: Node) => { if (n.type === 'ticket') { onNodeOpen ? onNodeOpen(n.id, e.clientX, e.clientY) : onSelect(n.id); } }}
         onEdgeClick={(e, edge) => onEdgeClick?.({ id: edge.id, x: e.clientX, y: e.clientY, srcKey: (edge.data as any)?.srcKey ?? edge.source, tgtKey: (edge.data as any)?.tgtKey ?? edge.target, relation: (edge.data as any)?.rel ?? '', label: (edge.data as any)?.label ?? '' })}
         proOptions={{ hideAttribution: true }}
         style={{ background: 'var(--bg)' }}>
@@ -62,6 +63,6 @@ function Canvas({ graph, state, dispatch, onSelect, onEdgeClick }: { graph: Grap
   );
 }
 
-export function GroupedCanvas(props: { graph: Graph; state: GraphState; dispatch: Dispatch<Action>; onSelect: (k: string) => void; onEdgeClick?: (p: EdgeClickPayload) => void }) {
+export function GroupedCanvas(props: { graph: Graph; state: GraphState; dispatch: Dispatch<Action>; onSelect: (k: string) => void; onEdgeClick?: (p: EdgeClickPayload) => void; onNodeOpen?: (id: string, x: number, y: number) => void }) {
   return <ReactFlowProvider><Canvas {...props} /></ReactFlowProvider>;
 }

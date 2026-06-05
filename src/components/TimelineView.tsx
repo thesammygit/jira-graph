@@ -2,6 +2,7 @@ import { useMemo, useRef, useState, useEffect } from 'react';
 import type { Graph } from '../core/model';
 import type { GraphState } from '../state/graphReducer';
 import { buildTimeline } from '../graph/timeline';
+import { isNodeVisible } from '../graph/visible';
 import './timeline.css';
 
 const ROW_H = 38, BAR_H = 22;
@@ -24,13 +25,12 @@ function monthBoundaries(minMs: number, maxMs: number, scale: number): Array<{ x
   return result;
 }
 
-export function TimelineView({ graph, state, onSelect }: { graph: Graph; state: GraphState; onSelect: (k: string) => void }) {
+export function TimelineView({ graph, state, onSelect, onNodeOpen }: { graph: Graph; state: GraphState; onSelect: (k: string) => void; onNodeOpen?: (id: string, x: number, y: number) => void }) {
   const ref = useRef<HTMLDivElement>(null);
   const [width, setWidth] = useState(900);
   useEffect(() => { if (ref.current) setWidth(Math.max(600, ref.current.clientWidth - LABEL_W)); }, []);
 
   const tl = useMemo(() => buildTimeline(graph, width), [graph, width]);
-  const visible = (kind: string, cat: string) => !state.hiddenTypes.has(kind as any) && !state.hiddenStatuses.has(cat as any);
   const hasBars = tl.rows.some((r) => r.bars.length);
 
   if (!hasBars) {
@@ -51,7 +51,7 @@ export function TimelineView({ graph, state, onSelect }: { graph: Graph; state: 
   for (const row of tl.rows) {
     yCalc += ROW_H; // epic header row
     for (const b of row.bars) {
-      if (!visible(b.node.type.kind, b.node.status.category)) continue;
+      if (!isNodeVisible(b.node, state)) continue;
       const bx = LABEL_W + b.x;
       const by = yCalc + (ROW_H - BAR_H) / 2;
       barPos.set(b.key, { cx: bx, cy: by, rx: b.width });
@@ -61,7 +61,7 @@ export function TimelineView({ graph, state, onSelect }: { graph: Graph; state: 
 
   // Total SVG height
   const svgH = tl.rows.reduce((s, r) => {
-    const visibleBars = r.bars.filter((b) => visible(b.node.type.kind, b.node.status.category));
+    const visibleBars = r.bars.filter((b) => isNodeVisible(b.node, state));
     return s + ROW_H * (1 + visibleBars.length);
   }, AXIS_H + 8);
 
@@ -102,12 +102,13 @@ export function TimelineView({ graph, state, onSelect }: { graph: Graph; state: 
           const header = (
             <text key={`h-${row.epicKey}`} x={8} y={headerY + 20} className="tl-epic">{row.label}</text>
           );
-          const bars = row.bars.filter((b) => visible(b.node.type.kind, b.node.status.category)).map((b) => {
+          const bars = row.bars.filter((b) => isNodeVisible(b.node, state)).map((b) => {
             const by = y; y += ROW_H;
             const bx = LABEL_W + b.x;
             const barW = Math.max(8, b.width);
+            const isFocal = state.focusKey === b.key;
             return (
-              <g key={b.key} className="tl-bar" onClick={() => onSelect(b.key)} role="button" aria-label={b.key}>
+              <g key={b.key} className={`tl-bar${isFocal ? ' tl-bar-focal' : ''}`} onClick={(e) => onNodeOpen ? onNodeOpen(b.key, e.clientX, e.clientY) : onSelect(b.key)} role="button" aria-label={b.key}>
                 <rect
                   x={bx} y={by + (ROW_H - BAR_H) / 2}
                   width={barW} height={BAR_H}

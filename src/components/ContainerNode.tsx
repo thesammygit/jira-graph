@@ -3,19 +3,21 @@ import './grouped.css';
 
 const DEPTH_KIND = ['epic', 'story', 'task']; // depth 0,1,2 → kind tokens
 
-export function ContainerNode({ data }: { data: { node: { key: string; summary: string } | null; depth: number; collapsed: boolean; width?: number; height?: number; onToggle?: (key: string) => void } }) {
-  const { node, depth, collapsed, onToggle } = data;
+export function ContainerNode({ data }: { data: { node: { key: string; summary: string } | null; depth: number; collapsed: boolean; focal?: boolean; width?: number; height?: number; onToggle?: (key: string) => void } }) {
+  const { node, depth, collapsed, focal, onToggle } = data;
   const kind = DEPTH_KIND[Math.min(depth, DEPTH_KIND.length - 1)];
   const accent = `var(--kind-${kind})`;
-  const borderColor = `color-mix(in srgb, var(--kind-${kind}) 35%, var(--border))`;
+  const borderColor = focal
+    ? `var(--accent)`
+    : `color-mix(in srgb, var(--kind-${kind}) 35%, var(--border))`;
   const bgColor = `color-mix(in srgb, var(--kind-${kind}) 5%, transparent)`;
 
   return (
     <div
-      className={`container-node depth-${depth} ${collapsed ? 'collapsed' : ''}`}
+      className={`container-node depth-${depth} ${collapsed ? 'collapsed' : ''} ${focal ? 'focal' : ''}`}
       style={{ borderColor, background: bgColor }}
     >
-      <Handle type="target" position={Position.Top} />
+      <Handle type="target" position={Position.Top} isConnectable={false} />
       <div className="container-head" style={{ color: accent }}>
         <button
           className="caret"
@@ -27,7 +29,7 @@ export function ContainerNode({ data }: { data: { node: { key: string; summary: 
         <span className="ck">{node?.key}</span>
         <span className="cs">{node?.summary}</span>
       </div>
-      <Handle type="source" position={Position.Bottom} />
+      <Handle type="source" position={Position.Bottom} isConnectable={false} />
     </div>
   );
 }

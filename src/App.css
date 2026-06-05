@@ -4,3 +4,16 @@ body { background: var(--bg); }
 .app-main { position: relative; flex: 1; min-width: 0; }
 .app-canvas, .app-main > * { animation: view-in 220ms ease both; }
 @keyframes view-in { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: none; } }
+
+/* Back-to-map button (focus mode) */
+.back-btn { position: absolute; top: 14px; left: 14px; z-index: 6; background: var(--panel); border: 1px solid var(--border-strong); color: var(--ink); border-radius: 9px; padding: 7px 12px; font-size: 12px; font-weight: 600; cursor: pointer; backdrop-filter: blur(8px); box-shadow: var(--shadow); }
+.back-btn:hover { border-color: var(--accent); }
+
+/* Hide connection handles — this is a visualization, not an editor */
+.react-flow__handle { opacity: 0 !important; pointer-events: none !important; width: 1px; height: 1px; min-width: 0; min-height: 0; border: none; }
+
+/* Theme the React Flow minimap + controls (default minimap mask is light gray) */
+.react-flow__minimap { background: var(--surface) !important; border: 1px solid var(--border); border-radius: 10px; }
+.react-flow__minimap-mask { fill: color-mix(in srgb, var(--bg) 55%, transparent) !important; }
+.react-flow__minimap-node { fill: var(--border-strong) !important; }
+.react-flow__controls-button { background: var(--surface) !important; border-bottom: 1px solid var(--border) !important; color: var(--ink) !important; fill: var(--ink) !important; }

@@ -74,6 +74,12 @@
   border-radius: 5px;
 }
 
+/* ── Epic badge ──────────────────────────────────────────────────────── */
+.ticket-epic { font: 700 9px var(--font-mono); color: var(--kind-epic); background: color-mix(in srgb, var(--kind-epic) 16%, transparent); padding: 1px 6px; border-radius: 5px; display: inline-block; margin: 4px 0 2px; }
+
+/* ── Focal highlight ring (focus mode target) ────────────────────────── */
+.ticket.focal { box-shadow: 0 0 0 3px var(--accent), var(--shadow); }
+
 /* ── Entrance animation ──────────────────────────────────────────────── */
 @keyframes ticket-in {
   from { opacity: 0; transform: translateY(4px); }

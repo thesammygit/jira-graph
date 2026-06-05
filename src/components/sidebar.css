@@ -23,6 +23,11 @@
 .sb-exit-focus:hover { background: color-mix(in srgb, var(--accent) 22%, transparent); }
 .sb-depth-row { display: flex; align-items: center; gap: 8px; }
 .sb-depth-row input[type="range"] { flex: 1; accent-color: var(--accent); }
+.tt { position: relative; }
+.tt-list { list-style: none; margin: 4px 0 0; padding: 4px; background: var(--surface); border: 1px solid var(--border); border-radius: 9px; box-shadow: var(--shadow); }
+.tt-list button { width: 100%; text-align: left; background: none; border: none; color: var(--ink); font-size: 12px; padding: 5px 7px; border-radius: 6px; cursor: pointer; }
+.tt-list button:hover { background: color-mix(in srgb, var(--accent) 12%, transparent); }
+.tt-list b { font-family: var(--font-mono); font-size: 11px; }
 .legend { display: flex; flex-direction: column; gap: 3px; }
 .legend-row { display: flex; align-items: center; gap: 8px; background: none; border: none; color: var(--ink-muted); font-size: 12px; padding: 3px 4px; border-radius: 6px; cursor: pointer; text-align: left; }
 .legend-row:hover { background: color-mix(in srgb, var(--accent) 10%, transparent); }

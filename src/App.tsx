@@ -41,7 +41,7 @@ export default function App() {
 
   return (
     <div className="app">
-      <Sidebar graph={view} state={state} dispatch={dispatch}
+      <Sidebar graph={full} state={state} dispatch={dispatch}
         theme={theme} onToggleTheme={toggle} dataset={dataset} onDataset={setDataset} />
       <main className="app-main">
         {state.viewMode === 'grouped' ? <GroupedCanvas graph={view} state={state} dispatch={dispatch} onSelect={(key) => dispatch({ type: 'select', key })} onEdgeClick={(p) => dispatch({ type: 'selectEdge', ...p })} onNodeOpen={(id, x, y) => dispatch({ type: 'openNode', key: id, x, y })} />

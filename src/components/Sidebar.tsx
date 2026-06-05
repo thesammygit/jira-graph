@@ -4,6 +4,7 @@ import type { LayoutKind } from '../graph/layouts';
 import type { IssueKind, Graph } from '../core/model';
 import type { Theme } from '../theme/useTheme';
 import { Legend } from './Legend';
+import { TicketTypeahead } from './TicketTypeahead';
 import './sidebar.css';
 
 const MODES: { id: ViewMode; label: string; icon: string }[] = [
@@ -34,6 +35,8 @@ export function Sidebar(props: {
           </button>
         ))}
       </nav>
+
+      <TicketTypeahead graph={graph} dispatch={dispatch} />
 
       {state.mode === 'focus' && (
         <div className="sb-section">
@@ -68,6 +71,35 @@ export function Sidebar(props: {
           <button key={t} className={`sb-chip ${state.hiddenTypes.has(t) ? '' : 'on'}`} onClick={() => dispatch({ type: 'toggleType', kind: t })}>{t}</button>
         ))}</div>
       </div>
+
+      {(() => {
+        const projects = Array.from(new Map(graph.nodes.map((n) => [n.project.key, n.project])).values());
+        if (projects.length === 0) return null;
+        return (
+          <div className="sb-section"><span className="sb-label">Projects</span>
+            <div className="sb-chips">{projects.map((p) => (
+              <button key={p.key} className={`sb-chip ${state.hiddenProjects.has(p.key) ? '' : 'on'}`}
+                onClick={() => dispatch({ type: 'toggleProject', key: p.key })}
+                title={p.name}>{p.key}</button>
+            ))}</div>
+          </div>
+        );
+      })()}
+
+      {(() => {
+        const assignees = Array.from(new Set(graph.nodes.map((n) => n.assignee?.displayName ?? '__unassigned__')));
+        if (assignees.length === 0) return null;
+        return (
+          <div className="sb-section"><span className="sb-label">Assignees</span>
+            <div className="sb-chips">{assignees.map((a) => (
+              <button key={a} className={`sb-chip ${state.hiddenAssignees.has(a) ? '' : 'on'}`}
+                onClick={() => dispatch({ type: 'toggleAssignee', name: a })}>
+                {a === '__unassigned__' ? 'Unassigned' : a}
+              </button>
+            ))}</div>
+          </div>
+        );
+      })()}
 
       <div className="sb-section"><span className="sb-label">Relationships</span>
         <Legend graph={graph} state={state} dispatch={dispatch} />

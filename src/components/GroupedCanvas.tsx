@@ -1,5 +1,5 @@
-import { useMemo, useState } from 'react';
-import { ReactFlow, ReactFlowProvider, Background, useReactFlow, type Node, type NodeTypes, type EdgeTypes } from '@xyflow/react';
+import { useMemo } from 'react';
+import { ReactFlow, ReactFlowProvider, Background, Controls, MiniMap, useReactFlow, type Node, type NodeTypes, type EdgeTypes } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { useEffect } from 'react';
 import type { Dispatch } from 'react';
@@ -8,7 +8,6 @@ import type { Action, GraphState } from '../state/graphReducer';
 import { groupGraph } from '../graph/grouping';
 import { GROUP, layoutGrouped } from '../graph/layouts/grouped';
 import { filterGroupingForState, toGroupedElements } from '../graph/grouped-elements';
-import { CanvasChrome } from './CanvasChrome';
 import { TicketNode } from './TicketNode';
 import { ContainerNode } from './ContainerNode';
 import { RoutedEdge } from './RoutedEdge';
@@ -20,8 +19,7 @@ const nodeTypes = { ticket: TicketNode, container: ContainerNode } as unknown as
 const edgeTypes = { routed: RoutedEdge } as unknown as EdgeTypes;
 
 export interface EdgeClickPayload { id: string; x: number; y: number; srcKey: string; tgtKey: string; relation: string; label: string }
-function Canvas({ graph, state, dispatch, onSelect, onEdgeClick, onNodeOpen }: { graph: Graph; state: GraphState; dispatch: Dispatch<Action>; onSelect: (k: string) => void; onEdgeClick?: (p: EdgeClickPayload) => void; onNodeOpen?: (id: string, x: number, y: number) => void }) {
-  const [locked, setLocked] = useState(false);
+function Canvas({ graph, state, dispatch, onEdgeClick, onNodeOpen }: { graph: Graph; state: GraphState; dispatch: Dispatch<Action>; onEdgeClick?: (p: EdgeClickPayload) => void; onNodeOpen?: (id: string) => void }) {
   const { nodes, edges } = useMemo(() => {
     const grouping = filterGroupingForState(groupGraph(graph, state.groupDepth), state);
     const { nodes, edges } = toGroupedElements(graph, grouping, layoutGrouped(grouping), state);
@@ -57,28 +55,19 @@ function Canvas({ graph, state, dispatch, onSelect, onEdgeClick, onNodeOpen }: {
   return (
     <RoutingContext.Provider value={obstacles}>
       <ReactFlow nodes={nodes} edges={edges} nodeTypes={nodeTypes} edgeTypes={edgeTypes} fitView
-        nodesDraggable={!locked}
-        nodesFocusable={!locked}
-        edgesFocusable={!locked}
-        elementsSelectable={!locked}
         nodesConnectable={false}
-        panOnDrag={!locked}
-        zoomOnScroll={!locked}
-        zoomOnPinch={!locked}
-        zoomOnDoubleClick={!locked}
-        selectNodesOnDrag={!locked}
-        className={locked ? 'flow-locked' : undefined}
-        onNodeClick={(e, n: Node) => { if (n.type === 'ticket') { onNodeOpen ? onNodeOpen(n.id, e.clientX, e.clientY) : onSelect(n.id); } }}
+        onNodeClick={(_e, n: Node) => { if (n.type === 'ticket') onNodeOpen?.(n.id); }}
         onEdgeClick={(e, edge) => onEdgeClick?.({ id: edge.id, x: e.clientX, y: e.clientY, srcKey: (edge.data as any)?.srcKey ?? edge.source, tgtKey: (edge.data as any)?.tgtKey ?? edge.target, relation: (edge.data as any)?.rel ?? '', label: (edge.data as any)?.label ?? '' })}
         proOptions={{ hideAttribution: true }}
         style={{ background: 'var(--bg)' }}>
         <Background color="var(--bg-grid)" />
-        <CanvasChrome locked={locked} onToggleLocked={() => setLocked((value) => !value)} />
+        <Controls />
+        <MiniMap pannable zoomable style={{ background: 'var(--surface)' }} />
       </ReactFlow>
     </RoutingContext.Provider>
   );
 }
 
-export function GroupedCanvas(props: { graph: Graph; state: GraphState; dispatch: Dispatch<Action>; onSelect: (k: string) => void; onEdgeClick?: (p: EdgeClickPayload) => void; onNodeOpen?: (id: string, x: number, y: number) => void }) {
+export function GroupedCanvas(props: { graph: Graph; state: GraphState; dispatch: Dispatch<Action>; onEdgeClick?: (p: EdgeClickPayload) => void; onNodeOpen?: (id: string) => void }) {
   return <ReactFlowProvider><Canvas {...props} /></ReactFlowProvider>;
 }

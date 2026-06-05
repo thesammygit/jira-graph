@@ -1,35 +1,45 @@
 import { initialState, reducer } from './graphReducer';
 
-test('setLayout switches layout', () => {
-  const s = reducer(initialState, { type: 'setLayout', layout: 'force' });
-  expect(s.layout).toBe('force');
+test('defaults: overview, depth 4, empty history/filters', () => {
+  expect(initialState.viewMode).toBe('overview');
+  expect(initialState.groupDepth).toBe(4);
+  expect(initialState.focusHistory).toEqual([]);
+  expect(initialState.focusKey).toBeNull();
 });
 
-test('setFocus enters focus mode and records the key', () => {
-  const s = reducer(initialState, { type: 'setFocus', key: 'STORY-10' });
-  expect(s.mode).toBe('focus');
-  expect(s.focusKey).toBe('STORY-10');
+test('openSpotlight from overview enters spotlight without pushing history', () => {
+  const s = reducer(initialState, { type: 'openSpotlight', key: 'A' });
+  expect(s.viewMode).toBe('spotlight');
+  expect(s.focusKey).toBe('A');
+  expect(s.focusHistory).toEqual([]);
+  expect(s.selectedKey).toBe('A');
 });
 
-test('setMode back to map clears focus', () => {
-  const focused = reducer(initialState, { type: 'setFocus', key: 'STORY-10' });
-  const s = reducer(focused, { type: 'setMode', mode: 'map' });
-  expect(s.mode).toBe('map');
-  expect(s.focusKey).toBeNull();
+test('openSpotlight while already spotlighting pushes the previous hero', () => {
+  const a = reducer(initialState, { type: 'openSpotlight', key: 'A' });
+  const b = reducer(a, { type: 'openSpotlight', key: 'B' });
+  expect(b.focusKey).toBe('B');
+  expect(b.focusHistory).toEqual(['A']);
 });
 
-test('setDepth clamps to >= 0', () => {
-  expect(reducer(initialState, { type: 'setDepth', depth: -3 }).depth).toBe(0);
-  expect(reducer(initialState, { type: 'setDepth', depth: 4 }).depth).toBe(4);
+test('spotlightBack pops to the previous hero, then to overview', () => {
+  let s = reducer(initialState, { type: 'openSpotlight', key: 'A' });
+  s = reducer(s, { type: 'openSpotlight', key: 'B' });
+  s = reducer(s, { type: 'spotlightBack' });
+  expect(s.focusKey).toBe('A');
+  expect(s.focusHistory).toEqual([]);
+  s = reducer(s, { type: 'spotlightBack' });
+  expect(s.viewMode).toBe('overview');
 });
 
-test('toggleType adds and removes a hidden issue kind', () => {
-  const hidden = reducer(initialState, { type: 'toggleType', kind: 'bug' });
-  expect(hidden.hiddenTypes.has('bug')).toBe(true);
-  const shown = reducer(hidden, { type: 'toggleType', kind: 'bug' });
-  expect(shown.hiddenTypes.has('bug')).toBe(false);
-});
-
-test('select records the selected key', () => {
-  expect(reducer(initialState, { type: 'select', key: 'BUG-40' }).selectedKey).toBe('BUG-40');
+test('setViewMode, group depth, filters, select, selectEdge', () => {
+  expect(reducer(initialState, { type: 'setViewMode', viewMode: 'spotlight' }).viewMode).toBe('spotlight');
+  expect(reducer(initialState, { type: 'setGroupDepth', depth: 2 }).groupDepth).toBe(2);
+  expect(reducer(initialState, { type: 'toggleProject', key: 'CHK' }).hiddenProjects.has('CHK')).toBe(true);
+  expect(reducer(initialState, { type: 'toggleAssignee', name: 'Sam' }).hiddenAssignees.has('Sam')).toBe(true);
+  expect(reducer(initialState, { type: 'toggleType', kind: 'bug' }).hiddenTypes.has('bug')).toBe(true);
+  expect(reducer(initialState, { type: 'toggleCollapsed', key: 'E' }).collapsed.has('E')).toBe(true);
+  const e = reducer(initialState, { type: 'selectEdge', id: 'x', x: 1, y: 2, srcKey: 'A', tgtKey: 'B', relation: 'blocks', label: 'blocks' });
+  expect(e.selectedEdge?.id).toBe('x');
+  expect(reducer(e, { type: 'clearEdge' }).selectedEdge).toBeNull();
 });

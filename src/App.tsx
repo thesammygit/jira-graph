@@ -5,14 +5,10 @@ import { v3Issues, v3Caps } from './fixtures/v3';
 import { v2Issues, v2Caps } from './fixtures/v2';
 import { largeIssues, largeCaps } from './fixtures/large';
 import { initialState, reducer } from './state/graphReducer';
-import { GraphCanvas } from './components/GraphCanvas';
 import { GroupedCanvas } from './components/GroupedCanvas';
-import { TreeView } from './components/TreeView';
-import { TimelineView } from './components/TimelineView';
+import { SpotlightView } from './components/SpotlightView';
 import { Sidebar } from './components/Sidebar';
 import { EdgePopup } from './components/EdgePopup';
-import { NodePopup } from './components/NodePopup';
-import { BackButton } from './components/BackButton';
 import { useTheme } from './theme/useTheme';
 import './App.css';
 
@@ -34,23 +30,19 @@ export default function App() {
   const { theme, toggle } = useTheme();
 
   useEffect(() => { provider.getGraph().then(setFull); }, [provider]);
-  useEffect(() => {
-    if (state.mode === 'focus' && state.focusKey) provider.getNeighborhood(state.focusKey, state.depth).then(setView);
-    else setView(full);
-  }, [provider, full, state.mode, state.focusKey, state.depth]);
+  useEffect(() => { setView(full); }, [full]);
 
   return (
     <div className="app">
       <Sidebar graph={full} state={state} dispatch={dispatch}
         theme={theme} onToggleTheme={toggle} dataset={dataset} onDataset={setDataset} />
       <main className="app-main">
-        {state.viewMode === 'grouped' ? <GroupedCanvas graph={view} state={state} dispatch={dispatch} onSelect={(key) => dispatch({ type: 'select', key })} onEdgeClick={(p) => dispatch({ type: 'selectEdge', ...p })} onNodeOpen={(id, x, y) => dispatch({ type: 'openNode', key: id, x, y })} />
-         : state.viewMode === 'tree' ? <TreeView graph={view} state={state} dispatch={dispatch} onSelect={(key) => dispatch({ type: 'select', key })} onNodeOpen={(id, x, y) => dispatch({ type: 'openNode', key: id, x, y })} />
-         : state.viewMode === 'timeline' ? <TimelineView graph={view} state={state} onSelect={(key) => dispatch({ type: 'select', key })} onNodeOpen={(id, x, y) => dispatch({ type: 'openNode', key: id, x, y })} />
-         : <GraphCanvas graph={view} state={state} onSelect={(key) => dispatch({ type: 'select', key })} onEdgeClick={(p) => dispatch({ type: 'selectEdge', ...p })} onNodeOpen={(id, x, y) => dispatch({ type: 'openNode', key: id, x, y })} />}
+        {state.viewMode === 'spotlight'
+          ? <SpotlightView graph={full} state={state} dispatch={dispatch} />
+          : <GroupedCanvas graph={view} state={state} dispatch={dispatch}
+              onNodeOpen={(id) => dispatch({ type: 'openSpotlight', key: id })}
+              onEdgeClick={(p) => dispatch({ type: 'selectEdge', ...p })} />}
         <EdgePopup graph={view} state={state} dispatch={dispatch} />
-        <NodePopup graph={view} state={state} dispatch={dispatch} />
-        <BackButton state={state} dispatch={dispatch} />
       </main>
     </div>
   );

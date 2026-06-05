@@ -1,23 +1,11 @@
 import type { Dispatch } from 'react';
-import type { Action, GraphState, ViewMode, GroupDepth } from '../state/graphReducer';
-import type { LayoutKind } from '../graph/layouts';
+import type { Action, GraphState, GroupDepth } from '../state/graphReducer';
 import type { IssueKind, Graph } from '../core/model';
 import type { Theme } from '../theme/useTheme';
 import { Legend } from './Legend';
 import { TicketTypeahead } from './TicketTypeahead';
 import './sidebar.css';
 
-const MODES: { id: ViewMode; label: string; icon: string; description: string }[] = [
-  { id: 'graph', label: 'Graph', icon: '◫', description: 'Freeform dependency map with selectable layout algorithms.' },
-  { id: 'grouped', label: 'Grouped', icon: '▦', description: 'Nested hierarchy boxes for epics, stories, tasks, and subtasks.' },
-  { id: 'tree', label: 'Tree', icon: '☰', description: 'Indented parent-child hierarchy with dependency badges.' },
-  { id: 'timeline', label: 'Timeline', icon: '▭', description: 'Date-based schedule view with blocking dependencies.' },
-];
-const LAYOUTS: { id: LayoutKind; label: string; description: string }[] = [
-  { id: 'hybrid', label: 'hybrid', description: 'Keeps hierarchy rows while pulling related tickets closer together.' },
-  { id: 'hierarchical', label: 'hierarchical', description: 'Strict parent-child rows for the clearest Jira hierarchy.' },
-  { id: 'force', label: 'force', description: 'Physics-style layout that clusters highly connected tickets.' },
-];
 const DEPTHS: GroupDepth[] = [1, 2, 3, 4];
 const DEPTH_LABEL: Record<GroupDepth, string> = { 1: 'Epic', 2: 'Story', 3: 'Task', 4: 'Subtask' };
 const TYPES: IssueKind[] = ['epic', 'story', 'task', 'subtask', 'bug'];
@@ -29,19 +17,25 @@ export function Sidebar(props: {
   theme: Theme; onToggleTheme: () => void; dataset: Dataset; onDataset: (d: Dataset) => void;
 }) {
   const { graph, state, dispatch, theme, onToggleTheme, dataset, onDataset } = props;
+  const canSpotlight = !!state.focusKey;
   return (
     <aside className="sidebar">
       <div className="sb-brand"><span className="sb-logo">◳</span> Jira Graph</div>
 
       <nav className="sb-modes">
-        {MODES.map((m) => (
-          <button key={m.id} className={`sb-mode ${state.viewMode === m.id ? 'on' : ''}`}
-            onClick={() => dispatch({ type: 'setViewMode', viewMode: m.id })}
-            title={m.description}
-            data-tooltip={m.description}>
-            <span className="sb-ico">{m.icon}</span>{m.label}
-          </button>
-        ))}
+        <button
+          className={`sb-mode ${state.viewMode === 'overview' ? 'on' : ''}`}
+          onClick={() => dispatch({ type: 'setViewMode', viewMode: 'overview' })}
+          title="Grouped container board — epics, stories, tasks, subtasks">
+          <span className="sb-ico">▦</span>Overview
+        </button>
+        <button
+          className={`sb-mode ${state.viewMode === 'spotlight' ? 'on' : ''}`}
+          onClick={() => { if (canSpotlight) dispatch({ type: 'setViewMode', viewMode: 'spotlight' }); }}
+          title={canSpotlight ? 'Focus view for a single ticket and its relationships' : 'Click a ticket in Overview to spotlight it'}
+          disabled={!canSpotlight}>
+          <span className="sb-ico">◎</span>Spotlight
+        </button>
       </nav>
 
       <div className="sb-section">
@@ -49,38 +43,17 @@ export function Sidebar(props: {
         <TicketTypeahead graph={graph} dispatch={dispatch} />
       </div>
 
-      {state.mode === 'focus' && (
-        <div className="sb-section">
-          <button className="sb-exit-focus" onClick={() => dispatch({ type: 'setMode', mode: 'map' })}>← Exit focus{state.focusKey ? ` (${state.focusKey})` : ''}</button>
-          <div className="sb-depth-row">
-            <span className="sb-label">Depth {state.depth}</span>
-            <input type="range" min={0} max={5} value={state.depth} onChange={(e) => dispatch({ type: 'setDepth', depth: Number(e.target.value) })} />
-          </div>
-        </div>
-      )}
-
       <div className="sb-section">
         <span className="sb-label">Search (highlight)</span>
         <input className="sb-search" placeholder="Search…" value={state.search}
           onChange={(e) => dispatch({ type: 'setSearch', query: e.target.value })} />
       </div>
 
-      {state.viewMode === 'grouped' && (
-        <div className="sb-section"><span className="sb-label">Depth</span>
-          <div className="sb-seg">{DEPTHS.map((d) => (
-            <button key={d} className={state.groupDepth === d ? 'on' : ''} onClick={() => dispatch({ type: 'setGroupDepth', depth: d })}>{DEPTH_LABEL[d]}</button>
-          ))}</div>
-        </div>
-      )}
-      {state.viewMode === 'graph' && (
-        <div className="sb-section"><span className="sb-label">Layout</span>
-          <div className="sb-seg">{LAYOUTS.map((l) => (
-            <button key={l.id} className={state.layout === l.id ? 'on' : ''} onClick={() => dispatch({ type: 'setLayout', layout: l.id })}
-              title={l.description}
-              data-tooltip={l.description}>{l.label}</button>
-          ))}</div>
-        </div>
-      )}
+      <div className="sb-section"><span className="sb-label">Depth</span>
+        <div className="sb-seg">{DEPTHS.map((d) => (
+          <button key={d} className={state.groupDepth === d ? 'on' : ''} onClick={() => dispatch({ type: 'setGroupDepth', depth: d })}>{DEPTH_LABEL[d]}</button>
+        ))}</div>
+      </div>
 
       <div className="sb-section"><span className="sb-label">Types</span>
         <div className="sb-chips">{TYPES.map((t) => (

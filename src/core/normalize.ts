@@ -80,5 +80,21 @@ export function normalizeIssues(rawIssues: any[], caps: Capabilities): Graph {
   }
   const keys = new Set(nodes.map((n) => n.key));
   const edges = [...edgeMap.values()].filter((e) => keys.has(e.source) && keys.has(e.target));
+
+  // Resolve each non-epic node's epic ancestor from hierarchy edges.
+  const parentOf = new Map<string, string>();
+  for (const e of edges) if (e.kind === 'hierarchy') parentOf.set(e.target, e.source);
+  const byKey = new Map(nodes.map((n) => [n.key, n]));
+  for (const node of nodes) {
+    if (node.type.kind === 'epic') continue;
+    let cur: string | undefined = parentOf.get(node.key);
+    let guard = 0;
+    while (cur && guard++ < 20) {
+      const p = byKey.get(cur);
+      if (p && p.type.kind === 'epic') { node.epicKey = p.key; node.epicSummary = p.summary; break; }
+      cur = parentOf.get(cur);
+    }
+  }
+
   return { nodes, edges };
 }

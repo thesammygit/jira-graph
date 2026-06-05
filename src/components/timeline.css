@@ -1,0 +1,8 @@
+.timeline { height: 100%; overflow: auto; background: #fff; font-family: ui-sans-serif, system-ui; }
+.timeline-empty { padding: 40px; color: #7b8794; font-family: ui-sans-serif, system-ui; }
+.tl-epic { font: 700 12px ui-sans-serif; fill: #5a45c7; }
+.tl-key { font: 700 10px ui-monospace, monospace; fill: #52606d; }
+.tl-sum { font: 600 11px ui-sans-serif; fill: #fff; }
+.tl-bar { cursor: pointer; }
+.tl-undated { padding: 10px 14px; border-top: 1px solid #e1e7ef; }
+.tl-undated button { margin: 0 4px; font: 700 10px ui-monospace, monospace; border: 1px solid #e1e7ef; border-radius: 10px; background: #f5f7fa; padding: 2px 7px; cursor: pointer; }

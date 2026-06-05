@@ -85,6 +85,7 @@ export function toGroupedElements(graph: Graph, grouping: Grouping, layout: Grou
     const colorVar = relationStyle(ge.relation).colorVar;
     edges.push({
       id, source: s, target: t, label: ge.label, type: 'routed',
+      data: { rel: relKey, label: ge.label ?? '', srcKey: s, tgtKey: t },
       style: { stroke: colorVar, strokeWidth: 1.6, strokeDasharray: ge.directed ? undefined : '5 4' },
       markerEnd: ge.directed ? ({ type: 'arrowclosed', color: colorVar } as Edge['markerEnd']) : undefined,
     });

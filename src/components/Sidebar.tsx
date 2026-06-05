@@ -35,6 +35,16 @@ export function Sidebar(props: {
         ))}
       </nav>
 
+      {state.mode === 'focus' && (
+        <div className="sb-section">
+          <button className="sb-exit-focus" onClick={() => dispatch({ type: 'setMode', mode: 'map' })}>← Exit focus{state.focusKey ? ` (${state.focusKey})` : ''}</button>
+          <div className="sb-depth-row">
+            <span className="sb-label">Depth {state.depth}</span>
+            <input type="range" min={0} max={5} value={state.depth} onChange={(e) => dispatch({ type: 'setDepth', depth: Number(e.target.value) })} />
+          </div>
+        </div>
+      )}
+
       <input className="sb-search" placeholder="Search…" value={state.search}
         onChange={(e) => dispatch({ type: 'setSearch', query: e.target.value })} />
 

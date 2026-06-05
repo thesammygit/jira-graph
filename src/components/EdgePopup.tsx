@@ -14,12 +14,10 @@ export function EdgePopup({ graph, state, dispatch }: { graph: Graph; state: Gra
     return () => window.removeEventListener('keydown', onKey);
   }, [sel, dispatch]);
   if (!sel) return null;
-  const edge = graph.edges.find((e) => e.id === sel.id);
-  if (!edge) return null;
-  const src = graph.nodes.find((n) => n.key === edge.source);
-  const tgt = graph.nodes.find((n) => n.key === edge.target);
+  const src = graph.nodes.find((n) => n.key === sel.srcKey);
+  const tgt = graph.nodes.find((n) => n.key === sel.tgtKey);
   if (!src || !tgt) return null;
-  const rel = relationStyle(edge.kind === 'hierarchy' ? 'hierarchy' : edge.relation);
+  const rel = relationStyle(sel.relation);
 
   const Mini = ({ n }: { n: GraphNode }) => (
     <div className="ep-mini" style={{ borderLeftColor: `var(--kind-${n.type.kind})` }}>
@@ -35,9 +33,9 @@ export function EdgePopup({ graph, state, dispatch }: { graph: Graph; state: Gra
       <div className="ep-pop" style={{ left: sel.x, top: sel.y }} role="dialog">
         <div className="ep-h">Relationship<button className="ep-x" onClick={() => dispatch({ type: 'clearEdge' })}>×</button></div>
         <Mini n={src} />
-        <div className="ep-rel"><span className="ep-badge" style={{ background: rel.colorVar, color: '#fff' }}>{edge.label} ↓</span></div>
+        <div className="ep-rel"><span className="ep-badge" style={{ background: rel.colorVar, color: '#fff' }}>{sel.label} ↓</span></div>
         <Mini n={tgt} />
-        <div className="ep-phrase">"{src.key} <b>{edge.relation}</b> {tgt.key}"</div>
+        <div className="ep-phrase">"{src.key} <b>{sel.relation}</b> {tgt.key}"</div>
         <div className="ep-actions">
           <button onClick={() => dispatch({ type: 'setFocus', key: src.key })}>Focus {src.key}</button>
           <button onClick={() => dispatch({ type: 'setFocus', key: tgt.key })}>Focus {tgt.key}</button>

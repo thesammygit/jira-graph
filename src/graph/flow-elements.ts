@@ -27,6 +27,7 @@ export function toFlowElements(graph: Graph, positions: Positions, state: GraphS
       id: ge.id, source: ge.source, target: ge.target, label: ge.label,
       type: 'routed',
       animated: ge.relation === 'blocks',
+      data: { rel: relKey, label: ge.label ?? '', srcKey: ge.source, tgtKey: ge.target },
       style: { stroke: colorVar, strokeWidth: 1.6, strokeDasharray: ge.directed ? undefined : '5 4' },
       markerEnd: ge.directed ? ({ type: 'arrowclosed', color: colorVar } as Edge['markerEnd']) : undefined,
     });

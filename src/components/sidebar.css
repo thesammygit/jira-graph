@@ -19,6 +19,10 @@
 .sb-chip.on { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
 .sb-foot { margin-top: auto; display: flex; flex-direction: column; gap: 8px; }
 .sb-select, .sb-theme { background: var(--surface); border: 1px solid var(--border); border-radius: 9px; padding: 7px 10px; color: var(--ink); font-size: 12px; cursor: pointer; }
+.sb-exit-focus { background: color-mix(in srgb, var(--accent) 12%, transparent); border: 1px solid var(--border); border-radius: 9px; padding: 7px 10px; color: var(--ink); font-size: 12px; cursor: pointer; text-align: left; }
+.sb-exit-focus:hover { background: color-mix(in srgb, var(--accent) 22%, transparent); }
+.sb-depth-row { display: flex; align-items: center; gap: 8px; }
+.sb-depth-row input[type="range"] { flex: 1; accent-color: var(--accent); }
 .legend { display: flex; flex-direction: column; gap: 3px; }
 .legend-row { display: flex; align-items: center; gap: 8px; background: none; border: none; color: var(--ink-muted); font-size: 12px; padding: 3px 4px; border-radius: 6px; cursor: pointer; text-align: left; }
 .legend-row:hover { background: color-mix(in srgb, var(--accent) 10%, transparent); }

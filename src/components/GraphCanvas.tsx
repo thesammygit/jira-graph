@@ -19,7 +19,8 @@ const nodeTypes = { ticket: TicketNode } as unknown as NodeTypes;
 // never logs "edge type 'routed' not found" during the initial render race.
 const edgeTypes = { routed: RoutedEdge } as unknown as EdgeTypes;
 
-interface CanvasProps { graph: Graph; state: GraphState; onSelect: (key: string) => void; onEdgeClick?: (id: string, x: number, y: number) => void }
+export interface EdgeClickPayload { id: string; x: number; y: number; srcKey: string; tgtKey: string; relation: string; label: string }
+interface CanvasProps { graph: Graph; state: GraphState; onSelect: (key: string) => void; onEdgeClick?: (p: EdgeClickPayload) => void }
 
 function Canvas({ graph, state, onSelect, onEdgeClick }: CanvasProps) {
   const { nodes, edges } = useMemo(() => {
@@ -38,7 +39,7 @@ function Canvas({ graph, state, onSelect, onEdgeClick }: CanvasProps) {
   }, [state.layout, graph, fitView]);
 
   const obstacles = useMemo(
-    () => nodes.map((n) => ({ id: n.id, rect: { x: n.position.x, y: n.position.y, width: 210, height: 96 } })),
+    () => nodes.map((n) => ({ id: n.id, rect: { x: n.position.x, y: n.position.y, width: 210, height: 108 } })),
     [nodes],
   );
 
@@ -51,7 +52,7 @@ function Canvas({ graph, state, onSelect, onEdgeClick }: CanvasProps) {
         edgeTypes={edgeTypes}
         fitView
         onNodeClick={(_, n: Node) => onSelect(n.id)}
-        onEdgeClick={(e, edge) => onEdgeClick?.(edge.id, e.clientX, e.clientY)}
+        onEdgeClick={(e, edge) => onEdgeClick?.({ id: edge.id, x: e.clientX, y: e.clientY, srcKey: (edge.data as any)?.srcKey ?? edge.source, tgtKey: (edge.data as any)?.tgtKey ?? edge.target, relation: (edge.data as any)?.rel ?? '', label: (edge.data as any)?.label ?? '' })}
         proOptions={{ hideAttribution: true }}
         style={{ background: 'var(--bg)' }}
       >

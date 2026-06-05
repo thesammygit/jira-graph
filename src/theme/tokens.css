@@ -19,6 +19,6 @@
   --ink: #1f2933; --ink-muted: #52606d; --accent: #2563eb; --accent-ink: #fff;
   --shadow: 0 4px 14px rgba(16,42,67,.10); --shadow-lg: 0 16px 44px rgba(16,42,67,.18);
   --status-todo: #9aa5b1; --status-inprogress: #b7791f; --status-done: #3ebd93;
-  --rel-hierarchy: #9aa5b1; --rel-blocks: #e12d39; --rel-relates: #2186eb; --rel-duplicates: #8b5cf6; --rel-clones: #0d9488; --rel-default: #7b8794;
+  --rel-hierarchy: #6b7787; --rel-blocks: #e12d39; --rel-relates: #2186eb; --rel-duplicates: #8b5cf6; --rel-clones: #0d9488; --rel-default: #7b8794;
   --edge-glow: none;
 }

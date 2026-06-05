@@ -41,10 +41,10 @@ export default function App() {
       <Sidebar graph={view} state={state} dispatch={dispatch}
         theme={theme} onToggleTheme={toggle} dataset={dataset} onDataset={setDataset} />
       <main className="app-main">
-        {state.viewMode === 'grouped' ? <GroupedCanvas graph={view} state={state} dispatch={dispatch} onSelect={(key) => dispatch({ type: 'select', key })} onEdgeClick={(id, x, y) => dispatch({ type: 'selectEdge', id, x, y })} />
+        {state.viewMode === 'grouped' ? <GroupedCanvas graph={view} state={state} dispatch={dispatch} onSelect={(key) => dispatch({ type: 'select', key })} onEdgeClick={(p) => dispatch({ type: 'selectEdge', ...p })} />
          : state.viewMode === 'tree' ? <TreeView graph={view} state={state} dispatch={dispatch} onSelect={(key) => dispatch({ type: 'select', key })} />
          : state.viewMode === 'timeline' ? <TimelineView graph={view} state={state} onSelect={(key) => dispatch({ type: 'select', key })} />
-         : <GraphCanvas graph={view} state={state} onSelect={(key) => dispatch({ type: 'select', key })} onEdgeClick={(id, x, y) => dispatch({ type: 'selectEdge', id, x, y })} />}
+         : <GraphCanvas graph={view} state={state} onSelect={(key) => dispatch({ type: 'select', key })} onEdgeClick={(p) => dispatch({ type: 'selectEdge', ...p })} />}
         <DetailPanel graph={view} selectedKey={state.selectedKey} dispatch={dispatch} />
         <EdgePopup graph={view} state={state} dispatch={dispatch} />
       </main>

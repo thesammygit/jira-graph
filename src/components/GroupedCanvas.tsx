@@ -18,7 +18,8 @@ import { RoutingContext } from './routing-context';
 const nodeTypes = { ticket: TicketNode, container: ContainerNode } as unknown as NodeTypes;
 const edgeTypes = { routed: RoutedEdge } as unknown as EdgeTypes;
 
-function Canvas({ graph, state, dispatch, onSelect, onEdgeClick }: { graph: Graph; state: GraphState; dispatch: Dispatch<Action>; onSelect: (k: string) => void; onEdgeClick?: (id: string, x: number, y: number) => void }) {
+export interface EdgeClickPayload { id: string; x: number; y: number; srcKey: string; tgtKey: string; relation: string; label: string }
+function Canvas({ graph, state, dispatch, onSelect, onEdgeClick }: { graph: Graph; state: GraphState; dispatch: Dispatch<Action>; onSelect: (k: string) => void; onEdgeClick?: (p: EdgeClickPayload) => void }) {
   const { nodes, edges } = useMemo(() => {
     const grouping = groupGraph(graph, state.groupDepth);
     const { nodes, edges } = toGroupedElements(graph, grouping, layoutGrouped(grouping), state);
@@ -33,14 +34,15 @@ function Canvas({ graph, state, dispatch, onSelect, onEdgeClick }: { graph: Grap
 
   const obstacles = useMemo(() => {
     const byId = new Map(nodes.map((n) => [n.id, n]));
-    const abs = (n: any): { x: number; y: number } =>
-      n.parentId && byId.get(n.parentId)
-        ? { x: byId.get(n.parentId)!.position.x + n.position.x, y: byId.get(n.parentId)!.position.y + n.position.y }
-        : n.position;
+    const abs = (n: any): { x: number; y: number } => {
+      let x = n.position.x, y = n.position.y, p = n.parentId ? byId.get(n.parentId) : undefined;
+      while (p) { x += p.position.x; y += p.position.y; p = p.parentId ? byId.get(p.parentId) : undefined; }
+      return { x, y };
+    };
     return nodes.map((n) => {
       const p = abs(n);
       const w = n.type === 'container' ? ((n.data as any).width ?? 200) : 168;
-      const h = n.type === 'container' ? ((n.data as any).height ?? 80) : 88;
+      const h = n.type === 'container' ? ((n.data as any).height ?? 80) : 96;
       return { id: n.id, rect: { x: p.x, y: p.y, width: w, height: h } };
     });
   }, [nodes]);
@@ -49,7 +51,7 @@ function Canvas({ graph, state, dispatch, onSelect, onEdgeClick }: { graph: Grap
     <RoutingContext.Provider value={obstacles}>
       <ReactFlow nodes={nodes} edges={edges} nodeTypes={nodeTypes} edgeTypes={edgeTypes} fitView
         onNodeClick={(_, n: Node) => n.type === 'ticket' && onSelect(n.id)}
-        onEdgeClick={(e, edge) => onEdgeClick?.(edge.id, e.clientX, e.clientY)}
+        onEdgeClick={(e, edge) => onEdgeClick?.({ id: edge.id, x: e.clientX, y: e.clientY, srcKey: (edge.data as any)?.srcKey ?? edge.source, tgtKey: (edge.data as any)?.tgtKey ?? edge.target, relation: (edge.data as any)?.rel ?? '', label: (edge.data as any)?.label ?? '' })}
         proOptions={{ hideAttribution: true }}
         style={{ background: 'var(--bg)' }}>
         <Background color="var(--bg-grid)" />
@@ -60,6 +62,6 @@ function Canvas({ graph, state, dispatch, onSelect, onEdgeClick }: { graph: Grap
   );
 }
 
-export function GroupedCanvas(props: { graph: Graph; state: GraphState; dispatch: Dispatch<Action>; onSelect: (k: string) => void; onEdgeClick?: (id: string, x: number, y: number) => void }) {
+export function GroupedCanvas(props: { graph: Graph; state: GraphState; dispatch: Dispatch<Action>; onSelect: (k: string) => void; onEdgeClick?: (p: EdgeClickPayload) => void }) {
   return <ReactFlowProvider><Canvas {...props} /></ReactFlowProvider>;
 }

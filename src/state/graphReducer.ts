@@ -14,7 +14,7 @@ export interface GraphState {
   hiddenRelations: Set<string>;
   search: string;
   selectedKey: string | null;
-  selectedEdge: { id: string; x: number; y: number } | null;
+  selectedEdge: { id: string; x: number; y: number; srcKey: string; tgtKey: string; relation: string; label: string } | null;
   viewMode: ViewMode;
   groupDepth: GroupDepth;
   collapsed: Set<string>;
@@ -39,7 +39,7 @@ export type Action =
   | { type: 'toggleRelation'; relation: string }
   | { type: 'setSearch'; query: string }
   | { type: 'select'; key: string | null }
-  | { type: 'selectEdge'; id: string; x: number; y: number }
+  | { type: 'selectEdge'; id: string; x: number; y: number; srcKey: string; tgtKey: string; relation: string; label: string }
   | { type: 'clearEdge' }
   | { type: 'setViewMode'; viewMode: ViewMode }
   | { type: 'setGroupDepth'; depth: GroupDepth }
@@ -62,7 +62,7 @@ export function reducer(state: GraphState, action: Action): GraphState {
     case 'toggleRelation': return { ...state, hiddenRelations: toggle(state.hiddenRelations, action.relation) };
     case 'setSearch': return { ...state, search: action.query };
     case 'select': return { ...state, selectedKey: action.key, selectedEdge: null };
-    case 'selectEdge': return { ...state, selectedEdge: { id: action.id, x: action.x, y: action.y }, selectedKey: null };
+    case 'selectEdge': return { ...state, selectedEdge: { id: action.id, x: action.x, y: action.y, srcKey: action.srcKey, tgtKey: action.tgtKey, relation: action.relation, label: action.label }, selectedKey: null };
     case 'clearEdge': return { ...state, selectedEdge: null };
     case 'setViewMode': return { ...state, viewMode: action.viewMode };
     case 'setGroupDepth': return { ...state, groupDepth: action.depth };

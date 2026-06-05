@@ -5,6 +5,7 @@ import { v3Issues, v3Caps } from './fixtures/v3';
 import { v2Issues, v2Caps } from './fixtures/v2';
 import { initialState, reducer } from './state/graphReducer';
 import { GraphCanvas } from './components/GraphCanvas';
+import { GroupedCanvas } from './components/GroupedCanvas';
 import { Toolbar } from './components/Toolbar';
 import { DetailPanel } from './components/DetailPanel';
 import './App.css';
@@ -42,7 +43,9 @@ export default function App() {
       </header>
       <Toolbar state={state} dispatch={dispatch} />
       <div className="app-canvas">
-        <GraphCanvas graph={view} state={state} onSelect={(key) => dispatch({ type: 'select', key })} />
+        {state.viewMode === 'grouped'
+          ? <GroupedCanvas graph={view} state={state} dispatch={dispatch} onSelect={(key) => dispatch({ type: 'select', key })} />
+          : <GraphCanvas graph={view} state={state} onSelect={(key) => dispatch({ type: 'select', key })} />}
         <DetailPanel graph={view} selectedKey={state.selectedKey} dispatch={dispatch} />
       </div>
     </div>

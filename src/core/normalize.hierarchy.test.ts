@@ -41,3 +41,15 @@ test('Epic Link absent (capability off) yields no epic edge', () => {
   const { edges } = normalizeIssue(raw, base);
   expect(edges).toHaveLength(0);
 });
+
+test('parent field takes precedence over a present Epic Link', () => {
+  const caps: Capabilities = { ...base, hasEpicLink: true, epicLinkFieldId: 'customfield_10014' };
+  const raw = { key: 'STORY-10', fields: {
+    summary: 's', issuetype: { name: 'Story', subtask: false }, status: {},
+    parent: { key: 'EPIC-1', fields: { issuetype: { name: 'Epic', subtask: false } } },
+    customfield_10014: 'EPIC-9', // should be ignored because parent wins
+  }};
+  const { edges } = normalizeIssue(raw, caps);
+  expect(edges).toHaveLength(1);
+  expect(edges[0]).toMatchObject({ relation: 'epic', source: 'EPIC-1', target: 'STORY-10' });
+});

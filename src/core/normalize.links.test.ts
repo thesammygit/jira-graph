@@ -40,3 +40,12 @@ test('normalizeIssues dedupes the same link seen from both sides and drops dangl
   expect(graph.nodes).toHaveLength(2);
   expect(graph.edges).toHaveLength(1);
 });
+
+test('normalizeIssues drops edges pointing at issues outside the batch', () => {
+  const lonely = { key: 'BUG-40', fields: { summary: 's', issuetype, status: {}, issuelinks: [
+    { type: { name: 'Blocks', inward: 'is blocked by', outward: 'blocks' }, outwardIssue: { key: 'STORY-99' } },
+  ]}};
+  const graph = normalizeIssues([lonely], caps); // STORY-99 is not in the batch
+  expect(graph.nodes).toHaveLength(1);
+  expect(graph.edges).toHaveLength(0);
+});

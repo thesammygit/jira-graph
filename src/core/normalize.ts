@@ -52,6 +52,11 @@ export function normalizeIssue(raw: any, caps: Capabilities): { node: GraphNode;
       ? { displayName: f.assignee.displayName, initials: initialsFrom(f.assignee.displayName ?? ''), avatarUrl: f.assignee.avatarUrls?.['24x24'] }
       : undefined,
     storyPoints: caps.storyPointsFieldId ? f[caps.storyPointsFieldId] : undefined,
+    startDate: caps.startDateFieldId ? f[caps.startDateFieldId] : undefined,
+    dueDate: f.duedate ?? undefined,
+    sprint: caps.sprintFieldId && Array.isArray(f[caps.sprintFieldId]) && f[caps.sprintFieldId].length
+      ? f[caps.sprintFieldId][f[caps.sprintFieldId].length - 1]?.name
+      : undefined,
     hierarchyLevel: hierarchyLevelFor(kind),
     url: `${caps.baseUrl}/browse/${raw.key}`,
     raw,

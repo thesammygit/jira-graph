@@ -11,6 +11,9 @@ export interface GraphNode {
   priority?: string;
   assignee?: { displayName: string; initials: string; avatarUrl?: string };
   storyPoints?: number;
+  startDate?: string;
+  dueDate?: string;
+  sprint?: string;
   hierarchyLevel: number;
   url: string;
   raw: unknown;
@@ -38,4 +41,6 @@ export interface Capabilities {
   hasEpicLink: boolean;
   epicLinkFieldId?: string;
   storyPointsFieldId?: string;
+  startDateFieldId?: string;
+  sprintFieldId?: string;
 }

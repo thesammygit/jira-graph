@@ -1,0 +1,41 @@
+import type { Graph } from '../../core/model';
+import type { Positions } from './types';
+import { COL_W } from './types';
+import { rowsByLevel, yForLevel } from './shared';
+
+/**
+ * Hierarchical backbone (y by level) but the horizontal barycenter pass also
+ * accounts for LINK edges, so link-connected nodes drift closer together —
+ * giving cleaner, shorter cross-links than strict hierarchical rows.
+ */
+export function hybrid(graph: Graph): Positions {
+  const rows = rowsByLevel(graph);
+  const maxLevel = Math.max(0, ...graph.nodes.map((n) => n.hierarchyLevel));
+  const pos: Positions = new Map();
+  for (const row of rows) row.forEach((node, i) => pos.set(node.key, { x: i * COL_W, y: yForLevel(node.hierarchyLevel, maxLevel) }));
+
+  const neighbors = new Map<string, string[]>();
+  const add = (a: string, b: string) => {
+    const arr = neighbors.get(a) ?? [];
+    if (!neighbors.has(a)) neighbors.set(a, arr);
+    arr.push(b);
+  };
+  for (const e of graph.edges) { // ALL edges, hierarchy + link
+    add(e.source, e.target);
+    add(e.target, e.source);
+  }
+  for (let sweep = 0; sweep < 6; sweep++) {
+    for (const row of rows) {
+      for (const node of row) {
+        const nbs = neighbors.get(node.key) ?? [];
+        if (nbs.length) pos.get(node.key)!.x = nbs.reduce((s, k) => s + (pos.get(k)?.x ?? 0), 0) / nbs.length;
+      }
+      const sorted = [...row].sort((a, b) => pos.get(a.key)!.x - pos.get(b.key)!.x);
+      for (let i = 1; i < sorted.length; i++) {
+        const prev = pos.get(sorted[i - 1].key)!, cur = pos.get(sorted[i].key)!;
+        if (cur.x - prev.x < COL_W) cur.x = prev.x + COL_W;
+      }
+    }
+  }
+  return pos;
+}

@@ -1,5 +1,6 @@
 import type { Capabilities, Graph, GraphEdge, GraphNode } from './model';
 import { hierarchyLevelFor, initialsFrom, kindFromIssuetype, statusCategoryFrom } from './jira-fields';
+import { adfToText } from './adf';
 
 function hierarchyEdge(source: string, target: string, relation: string, raw: unknown): GraphEdge {
   const label = relation === 'subtask' ? 'subtask of' : relation === 'epic' ? 'epic' : 'parent';
@@ -60,6 +61,9 @@ export function normalizeIssue(raw: any, caps: Capabilities): { node: GraphNode;
     hierarchyLevel: hierarchyLevelFor(kind),
     url: `${caps.baseUrl}/browse/${raw.key}`,
     raw,
+    project: f.project ? { key: f.project.key, name: f.project.name ?? f.project.key }
+                       : { key: String(raw.key).split('-')[0], name: String(raw.key).split('-')[0] },
+    description: adfToText(f.description) || undefined,
   };
   const edges: GraphEdge[] = [];
   edges.push(...hierarchyEdges(raw, kind, caps), ...linkEdges(raw));

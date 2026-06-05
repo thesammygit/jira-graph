@@ -17,6 +17,10 @@ export interface GraphNode {
   hierarchyLevel: number;
   url: string;
   raw: unknown;
+  project: { key: string; name: string };
+  description?: string;
+  epicKey?: string;
+  epicSummary?: string;
 }
 
 export interface GraphEdge {

@@ -2,10 +2,11 @@ import type { Dispatch } from 'react';
 import type { Graph } from '../core/model';
 import type { Action, GraphState } from '../state/graphReducer';
 import { buildTree, type TreeRow } from '../graph/tree';
+import { isNodeVisible } from '../graph/visible';
 import './tree.css';
 
 function Row({ row, state, dispatch, onSelect }: { row: TreeRow; state: GraphState; dispatch: Dispatch<Action>; onSelect: (k: string) => void }) {
-  if (state.hiddenTypes.has(row.node.type.kind) || state.hiddenStatuses.has(row.node.status.category)) return null;
+  if (!isNodeVisible(row.node, state)) return null;
   const collapsed = state.collapsed.has(row.key);
   const hasChildren = row.children.length > 0;
   const kindVar = `var(--kind-${row.node.type.kind})`;

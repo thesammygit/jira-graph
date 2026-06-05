@@ -3,7 +3,7 @@ import type { Graph } from '../core/model';
 import { initialState } from '../state/graphReducer';
 import { hierarchical } from './layouts/hierarchical';
 
-function n(key: string, kind: any, level: number): any { return { id: key, key, summary: key, type: { name: kind, kind }, status: { name: 's', category: 'todo' }, hierarchyLevel: level, url: '', raw: {} }; }
+function n(key: string, kind: any, level: number): any { return { id: key, key, summary: key, type: { name: kind, kind }, status: { name: 's', category: 'todo' }, project: { key: 'X', name: 'X' }, hierarchyLevel: level, url: '', raw: {} }; }
 const graph: Graph = {
   nodes: [n('EPIC-1', 'epic', 2), n('BUG-40', 'bug', 1)],
   edges: [{ id: 'l1', source: 'BUG-40', target: 'EPIC-1', kind: 'link', relation: 'blocks', label: 'blocks', directed: true, raw: {} }],

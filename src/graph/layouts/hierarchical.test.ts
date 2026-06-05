@@ -23,3 +23,16 @@ test('every node receives a finite, unique position', () => {
 test('is deterministic', () => {
   expect([...hierarchical(graph).entries()]).toEqual([...hierarchical(graph).entries()]);
 });
+
+test('layers by true tree depth, not coarse hierarchyLevel (deeper node sits lower even at same level)', () => {
+  // E(epic) → S(story) → T(task) → U(subtask). S and T share hierarchyLevel 1,
+  // but T is one hop deeper, so it must be on a lower row than S (the old bug
+  // collapsed every level-1 node into a single row).
+  const chain: Graph = { nodes: [n('E', 2), n('S', 1), n('T', 1), n('U', 0)], edges: [e('E', 'S'), e('S', 'T'), e('T', 'U')] };
+  const pos = hierarchical(chain);
+  expect(pos.get('E')!.y).toBeLessThan(pos.get('S')!.y);
+  expect(pos.get('S')!.y).toBeLessThan(pos.get('T')!.y);
+  expect(pos.get('T')!.y).toBeLessThan(pos.get('U')!.y);
+  // four distinct rows
+  expect(new Set([pos.get('E')!.y, pos.get('S')!.y, pos.get('T')!.y, pos.get('U')!.y]).size).toBe(4);
+});

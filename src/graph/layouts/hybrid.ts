@@ -1,18 +1,17 @@
 import type { Graph } from '../../core/model';
 import type { Positions } from './types';
-import { COL_W } from './types';
-import { rowsByLevel, yForLevel } from './shared';
+import { COL_W, ROW_H } from './types';
+import { rowsByDepth } from './shared';
 
 /**
- * Hierarchical backbone (y by level) but the horizontal barycenter pass also
- * accounts for LINK edges, so link-connected nodes drift closer together —
+ * Hierarchical backbone (y by true tree depth) but the horizontal barycenter pass
+ * also accounts for LINK edges, so link-connected nodes drift closer together —
  * giving cleaner, shorter cross-links than strict hierarchical rows.
  */
 export function hybrid(graph: Graph): Positions {
-  const rows = rowsByLevel(graph);
-  const maxLevel = Math.max(0, ...graph.nodes.map((n) => n.hierarchyLevel));
+  const { rows, depthOf } = rowsByDepth(graph);
   const pos: Positions = new Map();
-  for (const row of rows) row.forEach((node, i) => pos.set(node.key, { x: i * COL_W, y: yForLevel(node.hierarchyLevel, maxLevel) }));
+  for (const row of rows) row.forEach((node, i) => pos.set(node.key, { x: i * COL_W, y: (depthOf.get(node.key) ?? 0) * ROW_H }));
 
   const neighbors = new Map<string, string[]>();
   const add = (a: string, b: string) => {

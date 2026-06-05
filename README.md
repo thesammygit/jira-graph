@@ -77,7 +77,7 @@ All layout algorithms (hierarchical, force, hybrid), application state managemen
 
 - **Pinned exact versions + committed lockfile** — `package.json` records exact versions (no `^`/`~` ranges); `package-lock.json` is committed so CI and local installs are byte-for-byte identical.
 - **`npm ci --ignore-scripts`** — CI (and recommended local installs) use `npm ci` to respect the lockfile exactly and `--ignore-scripts` to block lifecycle-script execution from transitive dependencies.
-- **`npm audit` in CI** — the deploy workflow runs audit-level checks via the build pipeline; any high/critical advisory fails the build.
+- **`npm audit` in CI** — the deploy workflow runs `npm audit --audit-level=high`, so any high/critical advisory fails the build.
 - **Vet each dep on add** — before adding any new dependency: review the maintainer, weekly download count, transitive dependency tree, and time since last publish. Prefer hand-rolling small utilities over pulling in a new package.
 
 ---
@@ -102,8 +102,8 @@ Open [`src/providers/JiraProvider.ts`](src/providers/JiraProvider.ts).
 The skeleton provider:
 
 - Shares the same `normalize()` function as `MockProvider` — Jira API shape differences are absorbed there, not in the provider.
-- Detects whether the instance uses "Epic Link" (Server v2) or `fields.parent` (Cloud v3) by calling `/rest/api/{2,3}/field` and scanning field names — no hardcoded custom field IDs.
-- Paginates issues via `/search/jql` using `startAt` / `maxResults`.
+- Detects whether the instance exposes an "Epic Link" custom field (older Server/Data Center) by calling `/rest/api/3/field` and scanning field names — no hardcoded custom field IDs. (Pointing at a v2 instance means swapping the version in the field/search paths; the normalizer already handles both shapes.)
+- Fetches issues from `/rest/api/3/search/jql`. The current skeleton does a single un-paginated request (`fields=*all`); token-based pagination is marked `TODO(work)` in the file and is the one piece to finish against a live instance.
 - Requires a thin auth/CORS proxy to attach credentials and forward requests (out of scope for the public demo).
 
 The data provider is the **only** thing that changes when connecting to a live instance. The entire visualization layer — layouts, filters, depth expansion, state machine, React components — is untouched.
@@ -122,7 +122,7 @@ src/
 ├── providers/
 │   ├── DataProvider.ts       — DataProvider interface
 │   ├── MockProvider.ts       — normalizes bundled fixtures (dataset picker: v3/v2/no-epic)
-│   └── JiraProvider.ts       — live Jira skeleton (auth proxy + JQL pagination)
+│   └── JiraProvider.ts       — live Jira skeleton (shares normalize(); pagination is TODO)
 ├── fixtures/
 │   ├── v3.ts                 — Cloud v3 sample payload (parent field)
 │   └── v2.ts                 — Server v2 sample payload (Epic Link custom field)

@@ -26,7 +26,7 @@ function Canvas({ graph, state, onSelect, onEdgeClick, onNodeOpen }: CanvasProps
   const { nodes, edges } = useMemo(() => {
     const positions = layouts[state.layout](graph);
     return toFlowElements(graph, positions, state);
-  }, [graph, state.layout, state.hiddenTypes, state.hiddenStatuses, state.hiddenRelations, state.selectedKey, state.search, state.focusKey]);
+  }, [graph, state.layout, state.hiddenTypes, state.hiddenStatuses, state.hiddenProjects, state.hiddenAssignees, state.hiddenRelations, state.selectedKey, state.search, state.focusKey]);
 
   // React Flow only auto-fits on mount. Re-center the camera whenever the layout
   // or the underlying graph (dataset / focus / depth) changes, so switching

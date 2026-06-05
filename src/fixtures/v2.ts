@@ -6,6 +6,8 @@ export const v2Caps: Capabilities = {
   hasEpicLink: true,
   epicLinkFieldId: 'customfield_10014',
   storyPointsFieldId: 'customfield_10024',
+  startDateFieldId: 'customfield_10015',
+  sprintFieldId: 'customfield_10020',
 };
 
 // Helper issuetypes
@@ -80,6 +82,9 @@ export const v2Issues: any[] = [
       assignee: grace,
       customfield_10024: 8,
       customfield_10014: 'EPIC-100',
+      customfield_10015: '2026-06-09',
+      duedate: '2026-06-27',
+      customfield_10020: [{ name: 'Sprint 1' }],
       description: 'Allow users to download invoices as PDF.',
     },
   },
@@ -93,6 +98,9 @@ export const v2Issues: any[] = [
       assignee: henry,
       customfield_10024: 13,
       customfield_10014: 'EPIC-100',
+      customfield_10015: '2026-06-30',
+      duedate: '2026-07-18',
+      customfield_10020: [{ name: 'Sprint 2' }],
     },
   },
   {
@@ -133,6 +141,9 @@ export const v2Issues: any[] = [
       assignee: henry,
       customfield_10024: 8,
       customfield_10014: 'EPIC-100',
+      customfield_10015: '2026-06-02',
+      duedate: '2026-06-20',
+      customfield_10020: [{ name: 'Sprint 1' }],
       issuelinks: [blocks('STORY-202'), relatesTo('STORY-200')],
     },
   },
@@ -235,6 +246,9 @@ export const v2Issues: any[] = [
       assignee: henry,
       customfield_10024: 8,
       customfield_10014: 'EPIC-100',
+      customfield_10015: '2026-05-19',
+      duedate: '2026-05-30',
+      customfield_10020: [{ name: 'Sprint 1' }],
       issuelinks: [blocks('TASK-300')],
     },
   },

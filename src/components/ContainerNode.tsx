@@ -1,15 +1,14 @@
 import { Handle, Position } from '@xyflow/react';
 import './grouped.css';
 
-const TINT = ['#7b61ff', '#3ebd93', '#2186eb']; // depth 0,1,2 accent
-const TINT_BG = ['rgba(123,97,255,.05)', 'rgba(62,189,147,.04)', 'rgba(33,134,235,.04)'];
-const TINT_BORDER = ['rgba(123,97,255,.35)', 'rgba(62,189,147,.30)', 'rgba(33,134,235,.28)'];
+const DEPTH_KIND = ['epic', 'story', 'task']; // depth 0,1,2 → kind tokens
 
 export function ContainerNode({ data }: { data: { node: { key: string; summary: string } | null; depth: number; collapsed: boolean; width?: number; height?: number; onToggle?: (key: string) => void } }) {
   const { node, depth, collapsed, onToggle } = data;
-  const accent = TINT[Math.min(depth, TINT.length - 1)];
-  const bgColor = TINT_BG[Math.min(depth, TINT_BG.length - 1)];
-  const borderColor = TINT_BORDER[Math.min(depth, TINT_BORDER.length - 1)];
+  const kind = DEPTH_KIND[Math.min(depth, DEPTH_KIND.length - 1)];
+  const accent = `var(--kind-${kind})`;
+  const borderColor = `color-mix(in srgb, var(--kind-${kind}) 35%, var(--border))`;
+  const bgColor = `color-mix(in srgb, var(--kind-${kind}) 5%, transparent)`;
 
   return (
     <div

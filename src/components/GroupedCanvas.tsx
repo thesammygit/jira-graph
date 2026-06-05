@@ -27,8 +27,11 @@ function Canvas({ graph, state, dispatch, onSelect }: { graph: Graph; state: Gra
 
   return (
     <ReactFlow nodes={nodes} edges={edges} nodeTypes={nodeTypes} fitView
-      onNodeClick={(_, n: Node) => n.type === 'ticket' && onSelect(n.id)} proOptions={{ hideAttribution: true }}>
-      <Background /><Controls /><MiniMap pannable zoomable />
+      onNodeClick={(_, n: Node) => n.type === 'ticket' && onSelect(n.id)} proOptions={{ hideAttribution: true }}
+      style={{ background: 'var(--bg)' }}>
+      <Background color="var(--bg-grid)" />
+      <Controls />
+      <MiniMap pannable zoomable style={{ background: 'var(--surface)' }} />
     </ReactFlow>
   );
 }

@@ -40,10 +40,11 @@ function Canvas({ graph, state, onSelect }: CanvasProps) {
       fitView
       onNodeClick={(_, n: Node) => onSelect(n.id)}
       proOptions={{ hideAttribution: true }}
+      style={{ background: 'var(--bg)' }}
     >
-      <Background />
+      <Background color="var(--bg-grid)" />
       <Controls />
-      <MiniMap pannable zoomable />
+      <MiniMap pannable zoomable style={{ background: 'var(--surface)' }} />
     </ReactFlow>
   );
 }

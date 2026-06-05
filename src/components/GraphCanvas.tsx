@@ -15,6 +15,9 @@ import { RoutingContext } from './routing-context';
 // TicketNode has a typed `data` prop narrower than React Flow's `Record<string, unknown>`.
 // Cast via `unknown` so tsc accepts it in nodeTypes without weakening TicketNode's prop type.
 const nodeTypes = { ticket: TicketNode } as unknown as NodeTypes;
+// Defined at module scope (stable identity, available on first paint) so React Flow
+// never logs "edge type 'routed' not found" during the initial render race.
+const edgeTypes = { routed: RoutedEdge } as unknown as EdgeTypes;
 
 interface CanvasProps { graph: Graph; state: GraphState; onSelect: (key: string) => void }
 
@@ -34,7 +37,6 @@ function Canvas({ graph, state, onSelect }: CanvasProps) {
     return () => cancelAnimationFrame(id);
   }, [state.layout, graph, fitView]);
 
-  const edgeTypes = useMemo(() => ({ routed: RoutedEdge } as unknown as EdgeTypes), []);
   const obstacles = useMemo(
     () => nodes.map((n) => ({ id: n.id, rect: { x: n.position.x, y: n.position.y, width: 210, height: 96 } })),
     [nodes],

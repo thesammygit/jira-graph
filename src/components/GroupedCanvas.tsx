@@ -13,6 +13,11 @@ import { ContainerNode } from './ContainerNode';
 import { RoutedEdge } from './RoutedEdge';
 import { RoutingContext } from './routing-context';
 
+// Module scope (stable identity, present on first paint) so React Flow doesn't log
+// "type not found" during the initial render race.
+const nodeTypes = { ticket: TicketNode, container: ContainerNode } as unknown as NodeTypes;
+const edgeTypes = { routed: RoutedEdge } as unknown as EdgeTypes;
+
 function Canvas({ graph, state, dispatch, onSelect }: { graph: Graph; state: GraphState; dispatch: Dispatch<Action>; onSelect: (k: string) => void }) {
   const { nodes, edges } = useMemo(() => {
     const grouping = groupGraph(graph, state.groupDepth);
@@ -23,8 +28,6 @@ function Canvas({ graph, state, dispatch, onSelect }: { graph: Graph; state: Gra
     return { nodes: wired, edges };
   }, [graph, state.groupDepth, state.collapsed, state.hiddenTypes, state.hiddenStatuses, state.hiddenRelations, state.selectedKey, state.search, dispatch]);
 
-  const nodeTypes = useMemo(() => ({ ticket: TicketNode, container: ContainerNode } as unknown as NodeTypes), []);
-  const edgeTypes = useMemo(() => ({ routed: RoutedEdge } as unknown as EdgeTypes), []);
   const { fitView } = useReactFlow();
   useEffect(() => { const id = requestAnimationFrame(() => fitView({ duration: 300, padding: 0.15 })); return () => cancelAnimationFrame(id); }, [graph, state.groupDepth, fitView]);
 

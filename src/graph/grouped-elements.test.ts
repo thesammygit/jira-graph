@@ -73,3 +73,15 @@ test('project filters remove every grouped box for that project', () => {
   expect(nodes).toHaveLength(0);
   expect(edges).toHaveLength(0);
 });
+
+test('container-to-container links (epic↔epic) render as edges between the boxes', () => {
+  // Both endpoints are container boxes (epics), not leaf members. Previously these
+  // resolved to null and the edge was dropped — so "epics linked together" never showed.
+  const g: Graph = {
+    nodes: [n('EPIC-1', 'epic', 2), n('STORY-10', 'story', 1), n('EPIC-2', 'epic', 2), n('STORY-30', 'story', 1)],
+    edges: [h('EPIC-1', 'STORY-10'), h('EPIC-2', 'STORY-30'), l('EPIC-1', 'EPIC-2')],
+  };
+  const grouping = filterGroupingForState(groupGraph(g, initialState.groupDepth), initialState);
+  const { edges } = toGroupedElements(g, grouping, layoutGrouped(grouping), initialState);
+  expect(edges.some((e) => e.source === 'EPIC-1' && e.target === 'EPIC-2')).toBe(true);
+});

@@ -8,8 +8,9 @@ import { GraphCanvas } from './components/GraphCanvas';
 import { GroupedCanvas } from './components/GroupedCanvas';
 import { TreeView } from './components/TreeView';
 import { TimelineView } from './components/TimelineView';
-import { Toolbar } from './components/Toolbar';
+import { Sidebar } from './components/Sidebar';
 import { DetailPanel } from './components/DetailPanel';
+import { useTheme } from './theme/useTheme';
 import './App.css';
 
 type Dataset = 'v3' | 'v2' | 'v2-no-epic';
@@ -26,6 +27,7 @@ export default function App() {
   const [full, setFull] = useState<Graph>({ nodes: [], edges: [] });
   const [view, setView] = useState<Graph>({ nodes: [], edges: [] });
   const provider = useMemo(() => providerFor(dataset), [dataset]);
+  const { theme, toggle } = useTheme();
 
   useEffect(() => { provider.getGraph().then(setFull); }, [provider]);
   useEffect(() => {
@@ -35,25 +37,15 @@ export default function App() {
 
   return (
     <div className="app">
-      <header className="app-bar">
-        <strong>Jira Graph</strong>
-        <select value={dataset} onChange={(e) => setDataset(e.target.value as Dataset)}>
-          <option value="v3">Cloud v3 (parent field)</option>
-          <option value="v2">Server v2 (Epic Link)</option>
-          <option value="v2-no-epic">v2 — Epic Link absent</option>
-        </select>
-      </header>
-      <Toolbar state={state} dispatch={dispatch} />
-      <div className="app-canvas">
-        {state.viewMode === 'grouped'
-          ? <GroupedCanvas graph={view} state={state} dispatch={dispatch} onSelect={(key) => dispatch({ type: 'select', key })} />
-          : state.viewMode === 'tree'
-          ? <TreeView graph={view} state={state} dispatch={dispatch} onSelect={(key) => dispatch({ type: 'select', key })} />
-          : state.viewMode === 'timeline'
-          ? <TimelineView graph={view} state={state} onSelect={(key) => dispatch({ type: 'select', key })} />
-          : <GraphCanvas graph={view} state={state} onSelect={(key) => dispatch({ type: 'select', key })} />}
+      <Sidebar graph={view} state={state} dispatch={dispatch}
+        theme={theme} onToggleTheme={toggle} dataset={dataset} onDataset={setDataset} />
+      <main className="app-main">
+        {state.viewMode === 'grouped' ? <GroupedCanvas graph={view} state={state} dispatch={dispatch} onSelect={(key) => dispatch({ type: 'select', key })} />
+         : state.viewMode === 'tree' ? <TreeView graph={view} state={state} dispatch={dispatch} onSelect={(key) => dispatch({ type: 'select', key })} />
+         : state.viewMode === 'timeline' ? <TimelineView graph={view} state={state} onSelect={(key) => dispatch({ type: 'select', key })} />
+         : <GraphCanvas graph={view} state={state} onSelect={(key) => dispatch({ type: 'select', key })} />}
         <DetailPanel graph={view} selectedKey={state.selectedKey} dispatch={dispatch} />
-      </div>
+      </main>
     </div>
   );
 }

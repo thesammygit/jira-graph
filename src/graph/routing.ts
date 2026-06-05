@@ -87,7 +87,13 @@ export function routeOrthogonal(from: Pt, to: Pt, obstacles: Rect[], opts: { pad
     }
   }
 
-  if (!goalNode) return simplify([from, { x: to.x, y: from.y }, to]); // give up gracefully → L path
+  if (!goalNode) {
+    // Boxed in: return whichever L-path collides with fewer obstacles (best effort).
+    const hv = [from, { x: to.x, y: from.y }, to];
+    const vh = [from, { x: from.x, y: to.y }, to];
+    const hits = (p: Pt[]) => { let n = 0; for (let i = 1; i < p.length; i++) if (!clear(p[i - 1], p[i], rects)) n++; return n; };
+    return simplify(hits(hv) <= hits(vh) ? hv : vh);
+  }
 
   const pts: Pt[] = [];
   let n: N | undefined = goalNode;
@@ -106,6 +112,14 @@ export function routeOrthogonal(from: Pt, to: Pt, obstacles: Rect[], opts: { pad
   // Skip the last grid point if it equals to
   const iLast = (pts.length > iFirst && pts[pts.length - 1].x === to.x && pts[pts.length - 1].y === to.y)
     ? pts.length - 1 : pts.length;
+  // Connect from → first grid point orthogonally (mirror of the tail connector):
+  // if the first grid point differs from `from` in BOTH axes, insert a bend so the
+  // approach segment is never diagonal. Align the bend with the A* path's first step.
+  if (iFirst < pts.length && pts[iFirst].x !== from.x && pts[iFirst].y !== from.y) {
+    const nextPt = iFirst + 1 < iLast ? pts[iFirst + 1] : null;
+    if (nextPt && nextPt.x === pts[iFirst].x) full.push({ x: pts[iFirst].x, y: from.y });
+    else full.push({ x: from.x, y: pts[iFirst].y });
+  }
   for (let i = iFirst; i < iLast; i++) full.push(pts[i]);
   // Connect last point in full → to orthogonally
   const last = full[full.length - 1];

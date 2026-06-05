@@ -34,3 +34,18 @@ test('deterministic', () => {
   const o: Rect[] = [{ x: 80, y: -40, width: 60, height: 120 }];
   expect(routeOrthogonal({ x: 0, y: 20 }, { x: 220, y: 20 }, o)).toEqual(routeOrthogonal({ x: 0, y: 20 }, { x: 220, y: 20 }, o));
 });
+
+test('both L-corners blocked: path is fully orthogonal (no diagonal head/tail segment)', () => {
+  // obs1 on the HV corner (200,0), obs2 on the VH corner (0,200) — both naive L-paths blocked,
+  // and obs2 extends left/above `from`, which previously offset the grid and caused a diagonal head.
+  const obs1: Rect = { x: 170, y: -30, width: 60, height: 60 };
+  const obs2: Rect = { x: -30, y: 170, width: 60, height: 60 };
+  const path = routeOrthogonal({ x: 0, y: 0 }, { x: 200, y: 200 }, [obs1, obs2]);
+  expect(path[0]).toEqual({ x: 0, y: 0 });
+  expect(path[path.length - 1]).toEqual({ x: 200, y: 200 });
+  expect(segmentsAxisAligned(path)).toBe(true);
+  for (let i = 1; i < path.length; i++) {
+    expect(segHitsRect(path[i - 1], path[i], obs1)).toBe(false);
+    expect(segHitsRect(path[i - 1], path[i], obs2)).toBe(false);
+  }
+});

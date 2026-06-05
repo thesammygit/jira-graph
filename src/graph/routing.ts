@@ -148,7 +148,7 @@ export function routeOrthogonal(
 }
 
 // Drop collinear / duplicate points.
-function simplify(pts: Pt[]): Pt[] {
+export function simplify(pts: Pt[]): Pt[] {
   const out: Pt[] = [];
   for (const p of pts) {
     const last = out[out.length - 1];

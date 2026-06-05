@@ -31,9 +31,8 @@ export function Sidebar(props: {
         </button>
         <button
           className={`sb-mode ${state.viewMode === 'spotlight' ? 'on' : ''}`}
-          onClick={() => { if (canSpotlight) dispatch({ type: 'setViewMode', viewMode: 'spotlight' }); }}
-          title={canSpotlight ? 'Focus view for a single ticket and its relationships' : 'Click a ticket in Overview to spotlight it'}
-          disabled={!canSpotlight}>
+          onClick={() => dispatch({ type: 'setViewMode', viewMode: 'spotlight' })}
+          title={canSpotlight ? 'Focus view for a single ticket and its relationships' : 'Spotlight a ticket — click one in Overview or use "Focus a ticket"'}>
           <span className="sb-ico">◎</span>Spotlight
         </button>
       </nav>

@@ -93,7 +93,19 @@ export function toGroupedElements(graph: Graph, grouping: Grouping, layout: Grou
     return null;
   };
 
+  // The top-level container a visible endpoint lives in (itself when top-level).
+  const topMost = (key: string): string => {
+    const chain = ancestorChain.get(key); // container keys have a chain [self, …, top]
+    if (chain) return chain[chain.length - 1];
+    const owner = ownerContainer.get(key); // members climb via their owner
+    const oc = owner ? ancestorChain.get(owner) : undefined;
+    return oc ? oc[oc.length - 1] : key;
+  };
+
   // Build edges: only link edges (hierarchy is implied by containment).
+  // Readability rule: links BETWEEN top-level boxes are aggregated to ONE wall-to-wall
+  // wire per (boxA, boxB, relation) — the gutters stay clean and Spotlight/EdgePopup
+  // carry the ticket-level detail. Links WITHIN a box stay ticket-to-ticket.
   const edges: Edge[] = [];
   const seen = new Set<string>();
   for (const ge of graph.edges) {
@@ -102,12 +114,17 @@ export function toGroupedElements(graph: Graph, grouping: Grouping, layout: Grou
     if (state.hiddenRelations.has(relKey)) continue;
     const s = resolveEndpoint(ge.source), t = resolveEndpoint(ge.target);
     if (!s || !t || s === t) continue;
-    const id = `${s}->${t}:${relKey}`;
+    const sTop = topMost(s), tTop = topMost(t);
+    const sameBox = sTop === tTop;
+    const S = sameBox ? s : sTop;
+    const T = sameBox ? t : tTop;
+    if (S === T) continue;
+    const id = `${S}->${T}:${relKey}`;
     if (seen.has(id)) continue; seen.add(id);
     const colorVar = relationStyle(ge.relation).colorVar;
     edges.push({
-      id, source: s, target: t, label: ge.label, type: 'routed',
-      data: { rel: relKey, label: ge.label ?? '', srcKey: s, tgtKey: t },
+      id, source: S, target: T, type: 'routed', // no inline label — the legend + edge popup carry the meaning
+      data: { rel: relKey, label: ge.label ?? '', srcKey: ge.source, tgtKey: ge.target },
       style: { stroke: colorVar, strokeWidth: 2.2, opacity: 0.94, strokeDasharray: ge.directed ? undefined : '6 5' },
       markerEnd: ge.directed ? ({ type: 'arrowclosed', color: colorVar, width: 16, height: 16 } as Edge['markerEnd']) : undefined,
       zIndex: 2,

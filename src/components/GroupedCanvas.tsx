@@ -35,26 +35,39 @@ function Canvas({ graph, state, dispatch, onEdgeClick, onNodeOpen }: { graph: Gr
     return () => cancelAnimationFrame(id);
   }, [graph, state.groupDepth, nodes.length, edges.length, fitView]);
 
-  const obstacles = useMemo(() => {
+  // Full absolute rects for every node (containers = the whole box) plus the
+  // ancestry maps the gutter router needs. Cross-box wires then travel ONLY in
+  // the whitespace between top-level boxes — never through a container.
+  const routingInfo = useMemo(() => {
     const byId = new Map(nodes.map((n) => [n.id, n]));
-    const abs = (n: any): { x: number; y: number } => {
+    const absOf = (n: any): { x: number; y: number } => {
       let x = n.position.x, y = n.position.y, p = n.parentId ? byId.get(n.parentId) : undefined;
       while (p) { x += p.position.x; y += p.position.y; p = p.parentId ? byId.get(p.parentId) : undefined; }
       return { x, y };
     };
-    return nodes.map((n) => {
-      const p = abs(n);
+    const obstacles = nodes.map((n) => {
+      const p = absOf(n);
       const w = n.type === 'container' ? ((n.data as any).width ?? 200) : GROUP.CHIP_W;
-      const h = n.type === 'container'
-        ? ((n.data as any).collapsed ? ((n.data as any).height ?? GROUP.HEADER_H + GROUP.PAD * 2) : GROUP.HEADER_H + GROUP.PAD)
-        : GROUP.CHIP_H;
+      const h = n.type === 'container' ? ((n.data as any).height ?? 80) : GROUP.CHIP_H;
       return { id: n.id, rect: { x: p.x, y: p.y, width: w, height: h } };
     });
+    const topOf: Record<string, string> = {};
+    const ancestorsOf: Record<string, string[]> = {};
+    for (const n of nodes) {
+      const chain: string[] = [];
+      let p = n.parentId ? byId.get(n.parentId) : undefined;
+      while (p) { chain.push(p.id); p = p.parentId ? byId.get(p.parentId) : undefined; }
+      ancestorsOf[n.id] = chain;
+      topOf[n.id] = chain.length ? chain[chain.length - 1] : n.id;
+    }
+    return { obstacles, topOf, ancestorsOf };
   }, [nodes]);
 
   return (
-    <RoutingContext.Provider value={obstacles}>
+    <RoutingContext.Provider value={routingInfo}>
+      {/* minZoom lets fitView zoom out far enough to show the whole project */}
       <ReactFlow nodes={nodes} edges={edges} nodeTypes={nodeTypes} edgeTypes={edgeTypes} fitView
+        minZoom={0.08}
         nodesConnectable={false}
         onNodeClick={(_e, n: Node) => { if (n.type === 'ticket') onNodeOpen?.(n.id); }}
         onEdgeClick={(e, edge) => onEdgeClick?.({ id: edge.id, x: e.clientX, y: e.clientY, srcKey: (edge.data as any)?.srcKey ?? edge.source, tgtKey: (edge.data as any)?.tgtKey ?? edge.target, relation: (edge.data as any)?.rel ?? '', label: (edge.data as any)?.label ?? '' })}

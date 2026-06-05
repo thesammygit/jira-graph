@@ -1,4 +1,4 @@
-import { layoutGrouped, GROUP } from './grouped';
+import { layoutGrouped } from './grouped';
 import type { Grouping } from '../grouping';
 
 function leaf(key: string): any { return { key, summary: key, type: { kind: 'task' } }; }

@@ -81,7 +81,10 @@ export function toGroupedElements(graph: Graph, grouping: Grouping, layout: Grou
   // i.e. the innermost (nearest) collapsed container that absorbs this member.
   const resolveEndpoint = (key: string): string | null => {
     if (visibleMembers.has(key)) return key;
-    let container = ownerContainer.get(key);
+    if (visibleContainers.has(key)) return key; // the endpoint is itself a rendered container (epic/story/task box)
+    // Not directly visible: climb to the nearest visible ancestor container.
+    // Members climb via ownerContainer; container keys climb via their ancestor chain.
+    let container = ownerContainer.get(key) ?? (ancestorChain.has(key) ? ancestorChain.get(key)![1] : undefined);
     while (container) {
       if (visibleContainers.has(container)) return container; // innermost visible ancestor
       const chain = ancestorChain.get(container) ?? [];

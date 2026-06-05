@@ -8,7 +8,7 @@ export function TicketTypeahead({ graph, dispatch }: { graph: Graph; dispatch: D
   const matches = q.trim()
     ? graph.nodes.filter((n) => n.key.toLowerCase().includes(q.toLowerCase()) || n.summary.toLowerCase().includes(q.toLowerCase())).slice(0, 8)
     : [];
-  const focus = (key: string) => { dispatch({ type: 'setFocus', key }); setQ(''); };
+  const focus = (key: string) => { dispatch({ type: 'openSpotlight', key }); setQ(''); };
   return (
     <div className="tt">
       <input className="sb-search" placeholder="Focus a ticket…" value={q}

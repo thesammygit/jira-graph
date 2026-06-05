@@ -37,8 +37,8 @@ export function EdgePopup({ graph, state, dispatch }: { graph: Graph; state: Gra
         <Mini n={tgt} />
         <div className="ep-phrase">"{src.key} <b>{sel.relation}</b> {tgt.key}"</div>
         <div className="ep-actions">
-          <button onClick={() => dispatch({ type: 'setFocus', key: src.key })}>Focus {src.key}</button>
-          <button onClick={() => dispatch({ type: 'setFocus', key: tgt.key })}>Focus {tgt.key}</button>
+          <button onClick={() => dispatch({ type: 'openSpotlight', key: src.key })}>Spotlight {src.key}</button>
+          <button onClick={() => dispatch({ type: 'openSpotlight', key: tgt.key })}>Spotlight {tgt.key}</button>
         </div>
         <div className="ep-open"><a href={src.url} target="_blank" rel="noreferrer">Open {src.key} ↗</a><a href={tgt.url} target="_blank" rel="noreferrer">Open {tgt.key} ↗</a></div>
       </div>

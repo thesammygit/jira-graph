@@ -58,23 +58,18 @@ export function toGroupedElements(graph: Graph, grouping: Grouping, layout: Grou
     });
   }
 
-  // Resolve an endpoint: if the member is visible, return its key.
-  // Otherwise, climb the ownerContainer/ancestor chain to find the outermost
-  // collapsed container that is itself visible (i.e., not hidden by a further ancestor collapse).
+  // Resolve an endpoint: if the member is visible, return its key. Otherwise climb
+  // the ownerContainer/ancestor chain and return the FIRST visible container hit —
+  // i.e. the innermost (nearest) collapsed container that absorbs this member.
   const resolveEndpoint = (key: string): string | null => {
     if (visibleMembers.has(key)) return key;
-    // Find the container that owns this member
     let container = ownerContainer.get(key);
-    // Climb ancestor chain to find the outermost collapsed visible container
-    let lastVisible: string | null = null;
     while (container) {
-      if (visibleContainers.has(container)) {
-        lastVisible = container;
-      }
+      if (visibleContainers.has(container)) return container; // innermost visible ancestor
       const chain = ancestorChain.get(container) ?? [];
       container = chain[1]; // parent container
     }
-    return lastVisible;
+    return null;
   };
 
   // Build edges: only link edges (hierarchy is implied by containment).
@@ -95,5 +90,13 @@ export function toGroupedElements(graph: Graph, grouping: Grouping, layout: Grou
       markerEnd: ge.directed ? ({ type: 'arrowclosed', color } as Edge['markerEnd']) : undefined,
     });
   }
+  // React Flow requires every parent node to appear before its children in the array
+  // (for arbitrary nesting depth). Order by nesting depth: containers by their own
+  // depth, members by their parent container's depth + 1. Array.sort is stable.
+  const containerDepth = new Map(layout.containers.map((c) => [c.key, c.depth]));
+  const orderKey = (n: Node): number =>
+    n.type === 'container' ? (containerDepth.get(n.id) ?? 0) : (containerDepth.get(n.parentId ?? '') ?? 0) + 1;
+  nodes.sort((a, b) => orderKey(a) - orderKey(b));
+
   return { nodes, edges };
 }

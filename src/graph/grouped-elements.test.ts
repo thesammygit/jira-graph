@@ -39,3 +39,19 @@ test('collapsing a container hides its members and reroutes the edge to the cont
   // edge endpoint TASK-20 rerouted up to EPIC-1
   expect(edges.some((e) => e.source === 'EPIC-1' && e.target === 'STORY-30')).toBe(true);
 });
+
+test('collapsing a NESTED container reroutes to that container, not the outer epic', () => {
+  const collapsed = { ...initialState, collapsed: new Set(['STORY-10']) }; // EPIC-1 stays open
+  const { nodes, edges } = build(collapsed);
+  expect(nodes.some((x) => x.id === 'TASK-20')).toBe(false);   // member hidden
+  expect(nodes.some((x) => x.id === 'STORY-10')).toBe(true);   // nested container still shown
+  expect(edges.some((e) => e.source === 'STORY-10' && e.target === 'STORY-30')).toBe(true);
+  expect(edges.some((e) => e.source === 'EPIC-1')).toBe(false); // NOT rerouted to the epic
+});
+
+test('parent container nodes are ordered before their child nodes (React Flow requirement)', () => {
+  const { nodes } = build(initialState);
+  const idx = (id: string) => nodes.findIndex((n) => n.id === id);
+  expect(idx('EPIC-1')).toBeLessThan(idx('STORY-10')); // epic before its sub-container
+  expect(idx('STORY-10')).toBeLessThan(idx('TASK-20')); // sub-container before its member
+});

@@ -48,6 +48,9 @@ export function buildTimeline(graph: Graph, pixelWidth: number): TimelineModel {
     while (epicKey !== '__no_epic__' && nodeMap.get(epicKey)?.type.kind !== 'epic' && guard++ < 10) {
       epicKey = epicOf.get(epicKey) ?? '__no_epic__';
     }
+    // If the guard expired on a malformed/cyclic parent chain, fall back to "No epic"
+    // rather than labelling the row with a non-epic ticket's summary.
+    if (epicKey !== '__no_epic__' && nodeMap.get(epicKey)?.type.kind !== 'epic') epicKey = '__no_epic__';
     const label = epicKey === '__no_epic__' ? 'No epic' : (nodeMap.get(epicKey)?.summary ?? epicKey);
     const row = rowMap.get(epicKey) ?? { epicKey, label, bars: [] };
     if (!rowMap.has(epicKey)) rowMap.set(epicKey, row);

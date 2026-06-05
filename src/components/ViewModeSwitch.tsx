@@ -3,7 +3,8 @@ import type { Action, GraphState, ViewMode, GroupDepth } from '../state/graphRed
 
 const MODES: ViewMode[] = ['graph', 'grouped', 'tree', 'timeline'];
 const DEPTHS: GroupDepth[] = [1, 2, 3];
-const DEPTH_LABEL: Record<GroupDepth, string> = { 1: 'Epic', 2: 'Epic▸Story', 3: '▸Task' };
+// Depth = how deep containers nest (1 = epics only … 3 = down to tasks).
+const DEPTH_LABEL: Record<GroupDepth, string> = { 1: 'Epic', 2: 'Story', 3: 'Task' };
 
 export function ViewModeSwitch({ state, dispatch }: { state: GraphState; dispatch: Dispatch<Action> }) {
   return (

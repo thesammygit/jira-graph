@@ -17,7 +17,13 @@ export class JiraProvider implements DataProvider {
     const fields: Array<{ id: string; name: string }> = await res.json();
     const epic = fields.find((f) => f.name === 'Epic Link');
     const points = fields.find((f) => f.name === 'Story Points' || f.name === 'Story point estimate');
-    return { apiVersion: 3, baseUrl: this.baseUrl, hasEpicLink: !!epic, epicLinkFieldId: epic?.id, storyPointsFieldId: points?.id };
+    const start = fields.find((f) => f.name === 'Start date' || f.name === 'Start Date');
+    const sprint = fields.find((f) => f.name === 'Sprint');
+    return {
+      apiVersion: 3, baseUrl: this.baseUrl,
+      hasEpicLink: !!epic, epicLinkFieldId: epic?.id, storyPointsFieldId: points?.id,
+      startDateFieldId: start?.id, sprintFieldId: sprint?.id,
+    };
   }
 
   private async load(): Promise<Graph> {

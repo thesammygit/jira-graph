@@ -1,6 +1,64 @@
-.container-node { background: rgba(255,255,255,.6); border: 1.5px solid #ccc; border-radius: 14px; box-shadow: 0 2px 10px rgba(16,42,67,.06); }
-.container-head { display: flex; align-items: center; gap: 6px; padding: 7px 10px; font-family: ui-sans-serif, system-ui; }
-.container-head .caret { border: none; background: none; cursor: pointer; font-size: 12px; color: inherit; }
-.container-head .ck { font: 700 11px ui-monospace, monospace; }
-.container-head .cs { font-size: 12px; font-weight: 600; color: #3e4c59; }
-.container-node.depth-1 { background: rgba(255,255,255,.45); }
+/* ── Container node ─────────────────────────────────────────────────── */
+.container-node {
+  background: rgba(255,255,255,.6);
+  border: 1.5px solid #ccc;
+  border-radius: 14px;
+  box-shadow: 0 2px 10px rgba(16,42,67,.06);
+  transition: box-shadow 150ms ease, transform 150ms ease;
+  animation: container-in 240ms ease both;
+  backdrop-filter: blur(2px);
+}
+.container-node:hover {
+  box-shadow: 0 6px 22px rgba(16,42,67,.12);
+  transform: translateY(-1px);
+}
+.container-node.depth-1 {
+  background: rgba(255,255,255,.45);
+}
+.container-node.collapsed {
+  /* compact header-only look — body content hidden by React Flow height=0 */
+  border-style: dashed;
+}
+
+.container-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  font-family: ui-sans-serif, system-ui;
+  min-height: 34px;
+}
+.container-head .caret {
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 12px;
+  color: inherit;
+  padding: 0 2px;
+  border-radius: 4px;
+  transition: background 120ms ease;
+  flex-shrink: 0;
+}
+.container-head .caret:hover { background: rgba(0,0,0,.07); }
+.container-head .ck {
+  font: 700 11px ui-monospace, monospace;
+  letter-spacing: .3px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.container-head .cs {
+  font-size: 12px;
+  font-weight: 600;
+  color: #3e4c59;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+  min-width: 0;
+}
+
+/* ── Entrance animation ──────────────────────────────────────────────── */
+@keyframes container-in {
+  from { opacity: 0; transform: scale(.97); }
+  to   { opacity: 1; transform: scale(1); }
+}

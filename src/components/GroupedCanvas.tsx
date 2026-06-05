@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { ReactFlow, ReactFlowProvider, Background, Controls, MiniMap, useReactFlow, type Node, type NodeTypes } from '@xyflow/react';
+import { ReactFlow, ReactFlowProvider, Background, Controls, MiniMap, useReactFlow, type Node, type NodeTypes, type EdgeTypes } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { useEffect } from 'react';
 import type { Dispatch } from 'react';
@@ -10,6 +10,8 @@ import { layoutGrouped } from '../graph/layouts/grouped';
 import { toGroupedElements } from '../graph/grouped-elements';
 import { TicketNode } from './TicketNode';
 import { ContainerNode } from './ContainerNode';
+import { RoutedEdge } from './RoutedEdge';
+import { RoutingContext } from './routing-context';
 
 function Canvas({ graph, state, dispatch, onSelect }: { graph: Graph; state: GraphState; dispatch: Dispatch<Action>; onSelect: (k: string) => void }) {
   const { nodes, edges } = useMemo(() => {
@@ -22,17 +24,34 @@ function Canvas({ graph, state, dispatch, onSelect }: { graph: Graph; state: Gra
   }, [graph, state.groupDepth, state.collapsed, state.hiddenTypes, state.hiddenStatuses, state.hiddenRelations, state.selectedKey, state.search, dispatch]);
 
   const nodeTypes = useMemo(() => ({ ticket: TicketNode, container: ContainerNode } as unknown as NodeTypes), []);
+  const edgeTypes = useMemo(() => ({ routed: RoutedEdge } as unknown as EdgeTypes), []);
   const { fitView } = useReactFlow();
   useEffect(() => { const id = requestAnimationFrame(() => fitView({ duration: 300, padding: 0.15 })); return () => cancelAnimationFrame(id); }, [graph, state.groupDepth, fitView]);
 
+  const obstacles = useMemo(() => {
+    const byId = new Map(nodes.map((n) => [n.id, n]));
+    const abs = (n: any): { x: number; y: number } =>
+      n.parentId && byId.get(n.parentId)
+        ? { x: byId.get(n.parentId)!.position.x + n.position.x, y: byId.get(n.parentId)!.position.y + n.position.y }
+        : n.position;
+    return nodes.map((n) => {
+      const p = abs(n);
+      const w = n.type === 'container' ? ((n.data as any).width ?? 200) : 168;
+      const h = n.type === 'container' ? ((n.data as any).height ?? 80) : 88;
+      return { id: n.id, rect: { x: p.x, y: p.y, width: w, height: h } };
+    });
+  }, [nodes]);
+
   return (
-    <ReactFlow nodes={nodes} edges={edges} nodeTypes={nodeTypes} fitView
-      onNodeClick={(_, n: Node) => n.type === 'ticket' && onSelect(n.id)} proOptions={{ hideAttribution: true }}
-      style={{ background: 'var(--bg)' }}>
-      <Background color="var(--bg-grid)" />
-      <Controls />
-      <MiniMap pannable zoomable style={{ background: 'var(--surface)' }} />
-    </ReactFlow>
+    <RoutingContext.Provider value={obstacles}>
+      <ReactFlow nodes={nodes} edges={edges} nodeTypes={nodeTypes} edgeTypes={edgeTypes} fitView
+        onNodeClick={(_, n: Node) => n.type === 'ticket' && onSelect(n.id)} proOptions={{ hideAttribution: true }}
+        style={{ background: 'var(--bg)' }}>
+        <Background color="var(--bg-grid)" />
+        <Controls />
+        <MiniMap pannable zoomable style={{ background: 'var(--surface)' }} />
+      </ReactFlow>
+    </RoutingContext.Provider>
   );
 }
 

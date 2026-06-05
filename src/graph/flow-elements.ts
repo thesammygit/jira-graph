@@ -2,13 +2,7 @@ import type { Edge, Node } from '@xyflow/react';
 import type { Graph } from '../core/model';
 import type { GraphState } from '../state/graphReducer';
 import type { Positions } from './layouts/types';
-
-const EDGE_COLOR: Record<string, string> = { hierarchy: '#9aa5b1', blocks: '#e12d39', relates: '#2186eb' };
-
-function edgeColor(relation: string, kind: string): string {
-  if (kind === 'hierarchy') return EDGE_COLOR.hierarchy;
-  return EDGE_COLOR[relation] ?? '#7b8794';
-}
+import { relationStyle } from './relation-colors';
 
 export function toFlowElements(graph: Graph, positions: Positions, state: GraphState): { nodes: Node[]; edges: Edge[] } {
   const visible = new Set<string>();
@@ -28,12 +22,13 @@ export function toFlowElements(graph: Graph, positions: Positions, state: GraphS
     const relKey = ge.kind === 'hierarchy' ? 'hierarchy' : ge.relation;
     if (state.hiddenRelations.has(relKey)) continue;
     if (!visible.has(ge.source) || !visible.has(ge.target)) continue;
-    const color = edgeColor(ge.relation, ge.kind);
+    const colorVar = relationStyle(relKey).colorVar;
     edges.push({
       id: ge.id, source: ge.source, target: ge.target, label: ge.label,
+      type: 'routed',
       animated: ge.relation === 'blocks',
-      style: { stroke: color, strokeWidth: 1.6, strokeDasharray: ge.directed ? undefined : '5 4' },
-      markerEnd: ge.directed ? ({ type: 'arrowclosed', color } as Edge['markerEnd']) : undefined,
+      style: { stroke: colorVar, strokeWidth: 1.6, strokeDasharray: ge.directed ? undefined : '5 4' },
+      markerEnd: ge.directed ? ({ type: 'arrowclosed', color: colorVar } as Edge['markerEnd']) : undefined,
     });
   }
   return { nodes, edges };

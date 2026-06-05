@@ -1,7 +1,7 @@
 import { useEffect, useMemo } from 'react';
 import {
   ReactFlow, ReactFlowProvider, Background, Controls, MiniMap, useReactFlow,
-  type Node, type NodeTypes,
+  type Node, type NodeTypes, type EdgeTypes,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import type { Graph } from '../core/model';
@@ -9,6 +9,8 @@ import type { GraphState } from '../state/graphReducer';
 import { layouts } from '../graph/layouts';
 import { toFlowElements } from '../graph/flow-elements';
 import { TicketNode } from './TicketNode';
+import { RoutedEdge } from './RoutedEdge';
+import { RoutingContext } from './routing-context';
 
 // TicketNode has a typed `data` prop narrower than React Flow's `Record<string, unknown>`.
 // Cast via `unknown` so tsc accepts it in nodeTypes without weakening TicketNode's prop type.
@@ -32,20 +34,29 @@ function Canvas({ graph, state, onSelect }: CanvasProps) {
     return () => cancelAnimationFrame(id);
   }, [state.layout, graph, fitView]);
 
+  const edgeTypes = useMemo(() => ({ routed: RoutedEdge } as unknown as EdgeTypes), []);
+  const obstacles = useMemo(
+    () => nodes.map((n) => ({ id: n.id, rect: { x: n.position.x, y: n.position.y, width: 210, height: 96 } })),
+    [nodes],
+  );
+
   return (
-    <ReactFlow
-      nodes={nodes}
-      edges={edges}
-      nodeTypes={nodeTypes}
-      fitView
-      onNodeClick={(_, n: Node) => onSelect(n.id)}
-      proOptions={{ hideAttribution: true }}
-      style={{ background: 'var(--bg)' }}
-    >
-      <Background color="var(--bg-grid)" />
-      <Controls />
-      <MiniMap pannable zoomable style={{ background: 'var(--surface)' }} />
-    </ReactFlow>
+    <RoutingContext.Provider value={obstacles}>
+      <ReactFlow
+        nodes={nodes}
+        edges={edges}
+        nodeTypes={nodeTypes}
+        edgeTypes={edgeTypes}
+        fitView
+        onNodeClick={(_, n: Node) => onSelect(n.id)}
+        proOptions={{ hideAttribution: true }}
+        style={{ background: 'var(--bg)' }}
+      >
+        <Background color="var(--bg-grid)" />
+        <Controls />
+        <MiniMap pannable zoomable style={{ background: 'var(--surface)' }} />
+      </ReactFlow>
+    </RoutingContext.Provider>
   );
 }
 

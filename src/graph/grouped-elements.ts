@@ -3,8 +3,7 @@ import type { Graph } from '../core/model';
 import type { Grouping, GroupContainer } from './grouping';
 import type { GroupedLayout } from './layouts/grouped';
 import type { GraphState } from '../state/graphReducer';
-
-const EDGE_COLOR: Record<string, string> = { blocks: '#e12d39', relates: '#2186eb' };
+import { relationStyle } from './relation-colors';
 
 export function toGroupedElements(graph: Graph, grouping: Grouping, layout: GroupedLayout, state: GraphState): { nodes: Node[]; edges: Edge[] } {
   // Map each ticket to the container that owns it, and whether it is currently visible.
@@ -83,11 +82,11 @@ export function toGroupedElements(graph: Graph, grouping: Grouping, layout: Grou
     if (!s || !t || s === t) continue;
     const id = `${s}->${t}:${relKey}`;
     if (seen.has(id)) continue; seen.add(id);
-    const color = EDGE_COLOR[ge.relation] ?? '#7b8794';
+    const colorVar = relationStyle(ge.relation).colorVar;
     edges.push({
-      id, source: s, target: t, label: ge.label, type: 'smoothstep',
-      style: { stroke: color, strokeWidth: 1.6, strokeDasharray: ge.directed ? undefined : '5 4' },
-      markerEnd: ge.directed ? ({ type: 'arrowclosed', color } as Edge['markerEnd']) : undefined,
+      id, source: s, target: t, label: ge.label, type: 'routed',
+      style: { stroke: colorVar, strokeWidth: 1.6, strokeDasharray: ge.directed ? undefined : '5 4' },
+      markerEnd: ge.directed ? ({ type: 'arrowclosed', color: colorVar } as Edge['markerEnd']) : undefined,
     });
   }
   // React Flow requires every parent node to appear before its children in the array

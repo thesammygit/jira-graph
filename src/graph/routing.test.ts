@@ -49,3 +49,10 @@ test('both L-corners blocked: path is fully orthogonal (no diagonal head/tail se
     expect(segHitsRect(path[i - 1], path[i], obs2)).toBe(false);
   }
 });
+
+test('target gap keeps the final arrow endpoint outside the target card', () => {
+  const path = routeOrthogonal({ x: 0, y: 0 }, { x: 0, y: 100 }, [], { targetGap: 14 });
+  expect(path[0]).toEqual({ x: 0, y: 0 });
+  expect(path[path.length - 1]).toEqual({ x: 0, y: 86 });
+  expect(segmentsAxisAligned(path)).toBe(true);
+});

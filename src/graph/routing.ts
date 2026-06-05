@@ -11,7 +11,12 @@ function segHits(a: Pt, b: Pt, r: Rect): boolean {
 }
 const clear = (a: Pt, b: Pt, rects: Rect[]) => rects.every((r) => !segHits(a, b, r));
 
-export function routeOrthogonal(from: Pt, to: Pt, obstacles: Rect[], opts: { padding?: number; grid?: number } = {}): Pt[] {
+export function routeOrthogonal(
+  from: Pt,
+  to: Pt,
+  obstacles: Rect[],
+  opts: { padding?: number; grid?: number; sourceGap?: number; targetGap?: number } = {},
+): Pt[] {
   const pad = opts.padding ?? 12;
   const grid = Math.max(4, opts.grid ?? 16);
   const rects = obstacles.map((r) => inflate(r, pad));
@@ -19,7 +24,7 @@ export function routeOrthogonal(from: Pt, to: Pt, obstacles: Rect[], opts: { pad
   // Fast path: two-bend L routes (HV and VH). Use whichever is clear.
   for (const mid of [{ x: to.x, y: from.y }, { x: from.x, y: to.y }]) {
     if (clear(from, mid, rects) && clear(mid, to, rects)) {
-      return simplify([from, mid, to]);
+      return applyEndpointGaps(simplify([from, mid, to]), opts.sourceGap ?? 0, opts.targetGap ?? 0);
     }
   }
 
@@ -92,7 +97,7 @@ export function routeOrthogonal(from: Pt, to: Pt, obstacles: Rect[], opts: { pad
     const hv = [from, { x: to.x, y: from.y }, to];
     const vh = [from, { x: from.x, y: to.y }, to];
     const hits = (p: Pt[]) => { let n = 0; for (let i = 1; i < p.length; i++) if (!clear(p[i - 1], p[i], rects)) n++; return n; };
-    return simplify(hits(hv) <= hits(vh) ? hv : vh);
+    return applyEndpointGaps(simplify(hits(hv) <= hits(vh) ? hv : vh), opts.sourceGap ?? 0, opts.targetGap ?? 0);
   }
 
   const pts: Pt[] = [];
@@ -139,7 +144,7 @@ export function routeOrthogonal(from: Pt, to: Pt, obstacles: Rect[], opts: { pad
     }
     full.push(to);
   }
-  return simplify(full);
+  return applyEndpointGaps(simplify(full), opts.sourceGap ?? 0, opts.targetGap ?? 0);
 }
 
 // Drop collinear / duplicate points.
@@ -155,4 +160,25 @@ function simplify(pts: Pt[]): Pt[] {
     out.push(p);
   }
   return out;
+}
+
+function movePointToward(point: Pt, toward: Pt, gap: number): Pt {
+  if (gap <= 0) return point;
+  const dx = toward.x - point.x;
+  const dy = toward.y - point.y;
+  const len = Math.abs(dx) + Math.abs(dy);
+  if (len <= 0) return point;
+  const safeGap = Math.min(gap, Math.max(0, len - 1));
+  return {
+    x: point.x + Math.sign(dx) * safeGap,
+    y: point.y + Math.sign(dy) * safeGap,
+  };
+}
+
+function applyEndpointGaps(pts: Pt[], sourceGap: number, targetGap: number): Pt[] {
+  if (pts.length < 2 || (sourceGap <= 0 && targetGap <= 0)) return pts;
+  const out = pts.map((p) => ({ ...p }));
+  if (sourceGap > 0) out[0] = movePointToward(out[0], out[1], sourceGap);
+  if (targetGap > 0) out[out.length - 1] = movePointToward(out[out.length - 1], out[out.length - 2], targetGap);
+  return simplify(out);
 }

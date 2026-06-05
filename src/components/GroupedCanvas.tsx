@@ -1,13 +1,14 @@
-import { useMemo } from 'react';
-import { ReactFlow, ReactFlowProvider, Background, Controls, MiniMap, useReactFlow, type Node, type NodeTypes, type EdgeTypes } from '@xyflow/react';
+import { useMemo, useState } from 'react';
+import { ReactFlow, ReactFlowProvider, Background, useReactFlow, type Node, type NodeTypes, type EdgeTypes } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { useEffect } from 'react';
 import type { Dispatch } from 'react';
 import type { Graph } from '../core/model';
 import type { Action, GraphState } from '../state/graphReducer';
 import { groupGraph } from '../graph/grouping';
-import { layoutGrouped } from '../graph/layouts/grouped';
-import { toGroupedElements } from '../graph/grouped-elements';
+import { GROUP, layoutGrouped } from '../graph/layouts/grouped';
+import { filterGroupingForState, toGroupedElements } from '../graph/grouped-elements';
+import { CanvasChrome } from './CanvasChrome';
 import { TicketNode } from './TicketNode';
 import { ContainerNode } from './ContainerNode';
 import { RoutedEdge } from './RoutedEdge';
@@ -20,8 +21,9 @@ const edgeTypes = { routed: RoutedEdge } as unknown as EdgeTypes;
 
 export interface EdgeClickPayload { id: string; x: number; y: number; srcKey: string; tgtKey: string; relation: string; label: string }
 function Canvas({ graph, state, dispatch, onSelect, onEdgeClick, onNodeOpen }: { graph: Graph; state: GraphState; dispatch: Dispatch<Action>; onSelect: (k: string) => void; onEdgeClick?: (p: EdgeClickPayload) => void; onNodeOpen?: (id: string, x: number, y: number) => void }) {
+  const [locked, setLocked] = useState(false);
   const { nodes, edges } = useMemo(() => {
-    const grouping = groupGraph(graph, state.groupDepth);
+    const grouping = filterGroupingForState(groupGraph(graph, state.groupDepth), state);
     const { nodes, edges } = toGroupedElements(graph, grouping, layoutGrouped(grouping), state);
     // inject the collapse handler into container node data
     const wired = nodes.map((n) => n.type === 'container'
@@ -30,7 +32,10 @@ function Canvas({ graph, state, dispatch, onSelect, onEdgeClick, onNodeOpen }: {
   }, [graph, state.groupDepth, state.collapsed, state.hiddenTypes, state.hiddenStatuses, state.hiddenProjects, state.hiddenAssignees, state.hiddenRelations, state.selectedKey, state.search, state.focusKey, dispatch]);
 
   const { fitView } = useReactFlow();
-  useEffect(() => { const id = requestAnimationFrame(() => fitView({ duration: 300, padding: 0.15 })); return () => cancelAnimationFrame(id); }, [graph, state.groupDepth, fitView]);
+  useEffect(() => {
+    const id = requestAnimationFrame(() => fitView({ duration: 300, padding: 0.15 }));
+    return () => cancelAnimationFrame(id);
+  }, [graph, state.groupDepth, nodes.length, edges.length, fitView]);
 
   const obstacles = useMemo(() => {
     const byId = new Map(nodes.map((n) => [n.id, n]));
@@ -41,8 +46,10 @@ function Canvas({ graph, state, dispatch, onSelect, onEdgeClick, onNodeOpen }: {
     };
     return nodes.map((n) => {
       const p = abs(n);
-      const w = n.type === 'container' ? ((n.data as any).width ?? 200) : 168;
-      const h = n.type === 'container' ? ((n.data as any).height ?? 80) : 96;
+      const w = n.type === 'container' ? ((n.data as any).width ?? 200) : GROUP.CHIP_W;
+      const h = n.type === 'container'
+        ? ((n.data as any).collapsed ? ((n.data as any).height ?? GROUP.HEADER_H + GROUP.PAD * 2) : GROUP.HEADER_H + GROUP.PAD)
+        : GROUP.CHIP_H;
       return { id: n.id, rect: { x: p.x, y: p.y, width: w, height: h } };
     });
   }, [nodes]);
@@ -50,14 +57,23 @@ function Canvas({ graph, state, dispatch, onSelect, onEdgeClick, onNodeOpen }: {
   return (
     <RoutingContext.Provider value={obstacles}>
       <ReactFlow nodes={nodes} edges={edges} nodeTypes={nodeTypes} edgeTypes={edgeTypes} fitView
+        nodesDraggable={!locked}
+        nodesFocusable={!locked}
+        edgesFocusable={!locked}
+        elementsSelectable={!locked}
         nodesConnectable={false}
+        panOnDrag={!locked}
+        zoomOnScroll={!locked}
+        zoomOnPinch={!locked}
+        zoomOnDoubleClick={!locked}
+        selectNodesOnDrag={!locked}
+        className={locked ? 'flow-locked' : undefined}
         onNodeClick={(e, n: Node) => { if (n.type === 'ticket') { onNodeOpen ? onNodeOpen(n.id, e.clientX, e.clientY) : onSelect(n.id); } }}
         onEdgeClick={(e, edge) => onEdgeClick?.({ id: edge.id, x: e.clientX, y: e.clientY, srcKey: (edge.data as any)?.srcKey ?? edge.source, tgtKey: (edge.data as any)?.tgtKey ?? edge.target, relation: (edge.data as any)?.rel ?? '', label: (edge.data as any)?.label ?? '' })}
         proOptions={{ hideAttribution: true }}
         style={{ background: 'var(--bg)' }}>
         <Background color="var(--bg-grid)" />
-        <Controls />
-        <MiniMap pannable zoomable style={{ background: 'var(--surface)' }} />
+        <CanvasChrome locked={locked} onToggleLocked={() => setLocked((value) => !value)} />
       </ReactFlow>
     </RoutingContext.Provider>
   );

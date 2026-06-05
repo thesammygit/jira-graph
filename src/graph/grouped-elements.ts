@@ -1,10 +1,29 @@
 import type { Edge, Node } from '@xyflow/react';
 import type { Graph } from '../core/model';
 import type { Grouping, GroupContainer } from './grouping';
-import type { GroupedLayout } from './layouts/grouped';
+import { GROUP, type GroupedLayout } from './layouts/grouped';
 import type { GraphState } from '../state/graphReducer';
 import { relationStyle } from './relation-colors';
 import { isNodeVisible } from './visible';
+
+export function filterGroupingForState(grouping: Grouping, state: GraphState): Grouping {
+  const keepContainer = (container: GroupContainer): GroupContainer | null => {
+    const nodeVisible = container.node ? isNodeVisible(container.node, state) : false;
+    const subContainers = container.subContainers
+      .map(keepContainer)
+      .filter((c): c is GroupContainer => Boolean(c));
+    const members = container.members.filter((member) => isNodeVisible(member, state));
+
+    if (!nodeVisible && subContainers.length === 0 && members.length === 0) return null;
+    return { ...container, subContainers, members };
+  };
+
+  return {
+    containers: grouping.containers
+      .map(keepContainer)
+      .filter((c): c is GroupContainer => Boolean(c)),
+  };
+}
 
 export function toGroupedElements(graph: Graph, grouping: Grouping, layout: GroupedLayout, state: GraphState): { nodes: Node[]; edges: Edge[] } {
   // Map each ticket to the container that owns it, and whether it is currently visible.
@@ -53,6 +72,7 @@ export function toGroupedElements(graph: Graph, grouping: Grouping, layout: Grou
       id: pm.key, type: 'ticket', parentId: pm.parentKey, extent: 'parent',
       position: { x: pm.x, y: pm.y },
       data: { node, selected: state.selectedKey === pm.key, search: state.search, compact: true, focal: state.focusKey === pm.key },
+      style: { width: GROUP.CHIP_W, height: GROUP.CHIP_H },
     });
   }
 
@@ -85,8 +105,9 @@ export function toGroupedElements(graph: Graph, grouping: Grouping, layout: Grou
     edges.push({
       id, source: s, target: t, label: ge.label, type: 'routed',
       data: { rel: relKey, label: ge.label ?? '', srcKey: s, tgtKey: t },
-      style: { stroke: colorVar, strokeWidth: 1.6, strokeDasharray: ge.directed ? undefined : '5 4' },
-      markerEnd: ge.directed ? ({ type: 'arrowclosed', color: colorVar } as Edge['markerEnd']) : undefined,
+      style: { stroke: colorVar, strokeWidth: 2.2, opacity: 0.94, strokeDasharray: ge.directed ? undefined : '6 5' },
+      markerEnd: ge.directed ? ({ type: 'arrowclosed', color: colorVar, width: 16, height: 16 } as Edge['markerEnd']) : undefined,
+      zIndex: 2,
     });
   }
   // React Flow requires every parent node to appear before its children in the array

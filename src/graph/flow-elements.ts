@@ -2,6 +2,7 @@ import type { Edge, Node } from '@xyflow/react';
 import type { Graph } from '../core/model';
 import type { GraphState } from '../state/graphReducer';
 import type { Positions } from './layouts/types';
+import { TICKET_NODE_HEIGHT, TICKET_NODE_WIDTH } from './node-dimensions';
 import { relationStyle } from './relation-colors';
 import { isNodeVisible } from './visible';
 
@@ -16,6 +17,7 @@ export function toFlowElements(graph: Graph, positions: Positions, state: GraphS
       type: 'ticket',
       position: positions.get(gn.key) ?? { x: 0, y: 0 },
       data: { node: gn, selected: state.selectedKey === gn.key, search: state.search, focal: state.focusKey === gn.key },
+      style: { width: TICKET_NODE_WIDTH, height: TICKET_NODE_HEIGHT },
     });
   }
   const edges: Edge[] = [];
@@ -29,8 +31,9 @@ export function toFlowElements(graph: Graph, positions: Positions, state: GraphS
       type: 'routed',
       animated: ge.relation === 'blocks',
       data: { rel: relKey, label: ge.label ?? '', srcKey: ge.source, tgtKey: ge.target },
-      style: { stroke: colorVar, strokeWidth: 1.6, strokeDasharray: ge.directed ? undefined : '5 4' },
-      markerEnd: ge.directed ? ({ type: 'arrowclosed', color: colorVar } as Edge['markerEnd']) : undefined,
+      style: { stroke: colorVar, strokeWidth: 2.2, opacity: 0.94, strokeDasharray: ge.directed ? undefined : '6 5' },
+      markerEnd: ge.directed ? ({ type: 'arrowclosed', color: colorVar, width: 16, height: 16 } as Edge['markerEnd']) : undefined,
+      zIndex: 2,
     });
   }
   return { nodes, edges };

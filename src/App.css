@@ -1,8 +1,9 @@
-html, body, #root { height: 100%; margin: 0; }
+html, body, #root { width: 100%; height: 100%; margin: 0; overflow: hidden; }
 body { background: var(--bg); }
-.app { display: flex; height: 100vh; background: var(--bg); }
-.app-main { position: relative; flex: 1; min-width: 0; }
-.app-canvas, .app-main > * { animation: view-in 220ms ease both; }
+* { box-sizing: border-box; }
+.app { display: flex; width: 100%; height: 100dvh; max-height: 100dvh; overflow: hidden; background: var(--bg); }
+.app-main { position: relative; flex: 1; min-width: 0; height: 100%; overflow: hidden; }
+.app-main > .react-flow { animation: view-in 220ms ease both; }
 @keyframes view-in { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: none; } }
 
 /* Back-to-map button (focus mode) */
@@ -11,9 +12,21 @@ body { background: var(--bg); }
 
 /* Hide connection handles — this is a visualization, not an editor */
 .react-flow__handle { opacity: 0 !important; pointer-events: none !important; width: 1px; height: 1px; min-width: 0; min-height: 0; border: none; }
+.react-flow__edge-path { vector-effect: non-scaling-stroke; }
+.react-flow__edge.animated .react-flow__edge-path { stroke-dasharray: 9 5; animation-duration: 1.1s; }
+.flow-locked .react-flow__pane { cursor: not-allowed; }
 
 /* Theme the React Flow minimap + controls (default minimap mask is light gray) */
-.react-flow__minimap { background: var(--surface) !important; border: 1px solid var(--border); border-radius: 10px; }
+.react-flow__minimap, .ticket-minimap { background: var(--surface) !important; border: 1px solid var(--border); border-radius: 8px; box-shadow: var(--shadow); }
 .react-flow__minimap-mask { fill: color-mix(in srgb, var(--bg) 55%, transparent) !important; }
-.react-flow__minimap-node { fill: var(--border-strong) !important; }
+.react-flow__minimap-node { opacity: .95; }
+.ticket-minimap { width: 260px; height: 180px; overflow: hidden; cursor: grab; user-select: none; touch-action: none; }
+.ticket-minimap.locked { cursor: not-allowed; }
+.ticket-minimap:active { cursor: grabbing; }
+.ticket-minimap-bg { fill: var(--surface); }
+.ticket-minimap-dot { stroke: var(--surface); stroke-width: 1.2px; opacity: .95; }
+.ticket-minimap-dot.container { opacity: .82; }
+.ticket-minimap-view { fill: color-mix(in srgb, var(--accent) 10%, transparent); stroke: var(--accent); stroke-width: 1.5px; vector-effect: non-scaling-stroke; }
 .react-flow__controls-button { background: var(--surface) !important; border-bottom: 1px solid var(--border) !important; color: var(--ink) !important; fill: var(--ink) !important; }
+.react-flow__controls-button:hover { background: var(--surface-2) !important; }
+.react-flow__controls-button.canvas-lock.locked { color: var(--accent) !important; background: color-mix(in srgb, var(--accent) 13%, var(--surface)) !important; }

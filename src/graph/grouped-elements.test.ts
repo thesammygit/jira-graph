@@ -1,7 +1,8 @@
-import { toGroupedElements } from './grouped-elements';
+import { filterGroupingForState, toGroupedElements } from './grouped-elements';
 import { groupGraph } from './grouping';
 import { layoutGrouped } from './layouts/grouped';
 import type { Graph } from '../core/model';
+import type { IssueKind } from '../core/model';
 import { initialState } from '../state/graphReducer';
 
 function n(key: string, kind: any, level: number): any { return { id: key, key, summary: key, type: { name: kind, kind }, status: { name: 's', category: 'todo' }, project: { key: 'X', name: 'X' }, hierarchyLevel: level, url: '', raw: {} }; }
@@ -13,7 +14,7 @@ const graph: Graph = {
   edges: [h('EPIC-1', 'STORY-10'), h('STORY-10', 'TASK-20'), h('EPIC-2', 'STORY-30'), l('TASK-20', 'STORY-30')],
 };
 function build(state: typeof initialState) {
-  const grouping = groupGraph(graph, state.groupDepth);
+  const grouping = filterGroupingForState(groupGraph(graph, state.groupDepth), state);
   return toGroupedElements(graph, grouping, layoutGrouped(grouping), state);
 }
 
@@ -54,4 +55,21 @@ test('parent container nodes are ordered before their child nodes (React Flow re
   const idx = (id: string) => nodes.findIndex((n) => n.id === id);
   expect(idx('EPIC-1')).toBeLessThan(idx('STORY-10')); // epic before its sub-container
   expect(idx('STORY-10')).toBeLessThan(idx('TASK-20')); // sub-container before its member
+});
+
+test('type filters remove grouped containers and members that no longer match', () => {
+  const epicsOnly = {
+    ...initialState,
+    hiddenTypes: new Set<IssueKind>(['story', 'task', 'subtask', 'bug']),
+  };
+  const { nodes, edges } = build(epicsOnly);
+  expect(nodes.map((x) => x.id).sort()).toEqual(['EPIC-1', 'EPIC-2']);
+  expect(edges).toHaveLength(0);
+});
+
+test('project filters remove every grouped box for that project', () => {
+  const hiddenProject = { ...initialState, hiddenProjects: new Set(['X']) };
+  const { nodes, edges } = build(hiddenProject);
+  expect(nodes).toHaveLength(0);
+  expect(edges).toHaveLength(0);
 });

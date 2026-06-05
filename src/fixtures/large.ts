@@ -530,11 +530,15 @@ const chkStory2 = chk_e1_stories[1];
 if (chkStory1 && chkStory2) {
   addLink(chkStory1, relatesLink(chkStory2));
 }
+// CHK high-level dependency between epics
+addLink(chk_e1, relatesLink(chk_e2));
 
 // SRCH intra-project: blocks chain across first 2 SRCH stories
 if (srchStories.length >= 2) {
   addLink(srchStories[0], blocksLink(srchStories[1]));
 }
+// SRCH high-level dependency between epics
+addLink(srch_e2, blocksLink(srch_e3));
 
 // Cross-project links (required by spec):
 // 1. SRCH story relates to CHK story (cross-project relates)
@@ -549,5 +553,7 @@ if (chkTasks[0] && mobTasks[0]) {
 if (mobTasks.length >= 1 && srchStories.length >= 3) {
   addLink(mobTasks[0], relatesLink(srchStories[2]));
 }
+// Cross-project high-level dependency
+addLink(mob_e1, relatesLink(srch_e1));
 
 export const largeIssues: any[] = issues;

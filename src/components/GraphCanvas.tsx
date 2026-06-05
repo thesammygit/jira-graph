@@ -1,6 +1,6 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
-  ReactFlow, ReactFlowProvider, Background, Controls, MiniMap, useReactFlow,
+  ReactFlow, ReactFlowProvider, Background, useReactFlow,
   type Node, type NodeTypes, type EdgeTypes,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
@@ -8,6 +8,8 @@ import type { Graph } from '../core/model';
 import type { GraphState } from '../state/graphReducer';
 import { layouts } from '../graph/layouts';
 import { toFlowElements } from '../graph/flow-elements';
+import { TICKET_NODE_HEIGHT, TICKET_NODE_WIDTH } from '../graph/node-dimensions';
+import { CanvasChrome } from './CanvasChrome';
 import { TicketNode } from './TicketNode';
 import { RoutedEdge } from './RoutedEdge';
 import { RoutingContext } from './routing-context';
@@ -23,23 +25,23 @@ export interface EdgeClickPayload { id: string; x: number; y: number; srcKey: st
 interface CanvasProps { graph: Graph; state: GraphState; onSelect: (key: string) => void; onEdgeClick?: (p: EdgeClickPayload) => void; onNodeOpen?: (id: string, x: number, y: number) => void }
 
 function Canvas({ graph, state, onSelect, onEdgeClick, onNodeOpen }: CanvasProps) {
+  const [locked, setLocked] = useState(false);
   const { nodes, edges } = useMemo(() => {
     const positions = layouts[state.layout](graph);
     return toFlowElements(graph, positions, state);
   }, [graph, state.layout, state.hiddenTypes, state.hiddenStatuses, state.hiddenProjects, state.hiddenAssignees, state.hiddenRelations, state.selectedKey, state.search, state.focusKey]);
 
-  // React Flow only auto-fits on mount. Re-center the camera whenever the layout
-  // or the underlying graph (dataset / focus / depth) changes, so switching
-  // layouts never strands the nodes off-screen. Filter/search changes are left
-  // alone so they don't disrupt the user's manual zoom.
+  // React Flow only auto-fits on mount. Re-center the camera whenever the layout,
+  // underlying graph, or visible node set changes so filters don't strand the
+  // remaining nodes off-screen.
   const { fitView } = useReactFlow();
   useEffect(() => {
     const id = requestAnimationFrame(() => fitView({ duration: 300, padding: 0.2 }));
     return () => cancelAnimationFrame(id);
-  }, [state.layout, graph, fitView]);
+  }, [state.layout, graph, nodes.length, edges.length, fitView]);
 
   const obstacles = useMemo(
-    () => nodes.map((n) => ({ id: n.id, rect: { x: n.position.x, y: n.position.y, width: 210, height: 108 } })),
+    () => nodes.map((n) => ({ id: n.id, rect: { x: n.position.x, y: n.position.y, width: TICKET_NODE_WIDTH, height: TICKET_NODE_HEIGHT } })),
     [nodes],
   );
 
@@ -51,15 +53,24 @@ function Canvas({ graph, state, onSelect, onEdgeClick, onNodeOpen }: CanvasProps
         nodeTypes={nodeTypes}
         edgeTypes={edgeTypes}
         fitView
+        nodesDraggable={!locked}
+        nodesFocusable={!locked}
+        edgesFocusable={!locked}
+        elementsSelectable={!locked}
         nodesConnectable={false}
+        panOnDrag={!locked}
+        zoomOnScroll={!locked}
+        zoomOnPinch={!locked}
+        zoomOnDoubleClick={!locked}
+        selectNodesOnDrag={!locked}
+        className={locked ? 'flow-locked' : undefined}
         onNodeClick={(e, n: Node) => onNodeOpen ? onNodeOpen(n.id, e.clientX, e.clientY) : onSelect(n.id)}
         onEdgeClick={(e, edge) => onEdgeClick?.({ id: edge.id, x: e.clientX, y: e.clientY, srcKey: (edge.data as any)?.srcKey ?? edge.source, tgtKey: (edge.data as any)?.tgtKey ?? edge.target, relation: (edge.data as any)?.rel ?? '', label: (edge.data as any)?.label ?? '' })}
         proOptions={{ hideAttribution: true }}
         style={{ background: 'var(--bg)' }}
       >
         <Background color="var(--bg-grid)" />
-        <Controls />
-        <MiniMap pannable zoomable style={{ background: 'var(--surface)' }} />
+        <CanvasChrome locked={locked} onToggleLocked={() => setLocked((value) => !value)} />
       </ReactFlow>
     </RoutingContext.Provider>
   );
@@ -72,4 +83,3 @@ export function GraphCanvas(props: CanvasProps) {
     </ReactFlowProvider>
   );
 }
-

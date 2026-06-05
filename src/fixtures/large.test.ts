@@ -29,3 +29,13 @@ test('contains blocks and relates links (incl. at least one cross-project)', () 
   });
   expect(crossProject).toBe(true);
 });
+
+test('large demo includes direct epic-to-epic dependencies', () => {
+  const g = normalizeIssues(largeIssues, largeCaps);
+  const epicLinks = g.edges.filter((e) => {
+    const s = g.nodes.find((n) => n.key === e.source);
+    const t = g.nodes.find((n) => n.key === e.target);
+    return e.kind === 'link' && s?.type.kind === 'epic' && t?.type.kind === 'epic';
+  });
+  expect(epicLinks.length).toBeGreaterThanOrEqual(2);
+});

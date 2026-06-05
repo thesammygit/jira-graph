@@ -7,11 +7,17 @@ import { Legend } from './Legend';
 import { TicketTypeahead } from './TicketTypeahead';
 import './sidebar.css';
 
-const MODES: { id: ViewMode; label: string; icon: string }[] = [
-  { id: 'graph', label: 'Graph', icon: '◫' }, { id: 'grouped', label: 'Grouped', icon: '▦' },
-  { id: 'tree', label: 'Tree', icon: '☰' }, { id: 'timeline', label: 'Timeline', icon: '▭' },
+const MODES: { id: ViewMode; label: string; icon: string; description: string }[] = [
+  { id: 'graph', label: 'Graph', icon: '◫', description: 'Freeform dependency map with selectable layout algorithms.' },
+  { id: 'grouped', label: 'Grouped', icon: '▦', description: 'Nested hierarchy boxes for epics, stories, tasks, and subtasks.' },
+  { id: 'tree', label: 'Tree', icon: '☰', description: 'Indented parent-child hierarchy with dependency badges.' },
+  { id: 'timeline', label: 'Timeline', icon: '▭', description: 'Date-based schedule view with blocking dependencies.' },
 ];
-const LAYOUTS: LayoutKind[] = ['hybrid', 'hierarchical', 'force'];
+const LAYOUTS: { id: LayoutKind; label: string; description: string }[] = [
+  { id: 'hybrid', label: 'hybrid', description: 'Keeps hierarchy rows while pulling related tickets closer together.' },
+  { id: 'hierarchical', label: 'hierarchical', description: 'Strict parent-child rows for the clearest Jira hierarchy.' },
+  { id: 'force', label: 'force', description: 'Physics-style layout that clusters highly connected tickets.' },
+];
 const DEPTHS: GroupDepth[] = [1, 2, 3, 4];
 const DEPTH_LABEL: Record<GroupDepth, string> = { 1: 'Epic', 2: 'Story', 3: 'Task', 4: 'Subtask' };
 const TYPES: IssueKind[] = ['epic', 'story', 'task', 'subtask', 'bug'];
@@ -30,7 +36,9 @@ export function Sidebar(props: {
       <nav className="sb-modes">
         {MODES.map((m) => (
           <button key={m.id} className={`sb-mode ${state.viewMode === m.id ? 'on' : ''}`}
-            onClick={() => dispatch({ type: 'setViewMode', viewMode: m.id })}>
+            onClick={() => dispatch({ type: 'setViewMode', viewMode: m.id })}
+            title={m.description}
+            data-tooltip={m.description}>
             <span className="sb-ico">{m.icon}</span>{m.label}
           </button>
         ))}
@@ -67,7 +75,9 @@ export function Sidebar(props: {
       {state.viewMode === 'graph' && (
         <div className="sb-section"><span className="sb-label">Layout</span>
           <div className="sb-seg">{LAYOUTS.map((l) => (
-            <button key={l} className={state.layout === l ? 'on' : ''} onClick={() => dispatch({ type: 'setLayout', layout: l })}>{l}</button>
+            <button key={l.id} className={state.layout === l.id ? 'on' : ''} onClick={() => dispatch({ type: 'setLayout', layout: l.id })}
+              title={l.description}
+              data-tooltip={l.description}>{l.label}</button>
           ))}</div>
         </div>
       )}

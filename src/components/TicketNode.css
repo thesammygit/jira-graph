@@ -1,10 +1,12 @@
 /* ── Full ticket card ───────────────────────────────────────────────── */
 .ticket {
   width: 210px;
+  min-height: 108px;
+  box-sizing: border-box;
   background: var(--surface);
   border: 1px solid var(--border);
   border-top: 3px solid var(--border);
-  border-radius: 10px;
+  border-radius: 8px;
   box-shadow: var(--shadow);
   padding: 10px 12px;
   font-family: var(--font-sans);
@@ -27,8 +29,9 @@
 
 /* ── Compact ticket card (grouped mode member cells) ─────────────────── */
 .ticket.compact {
-  width: 150px;
-  min-height: 72px;
+  width: 168px;
+  height: 88px;
+  min-height: 88px;
   padding: 8px 10px 7px;
   display: flex;
   flex-direction: column;

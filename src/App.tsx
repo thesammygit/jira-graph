@@ -7,6 +7,7 @@ import { initialState, reducer } from './state/graphReducer';
 import { GraphCanvas } from './components/GraphCanvas';
 import { GroupedCanvas } from './components/GroupedCanvas';
 import { TreeView } from './components/TreeView';
+import { TimelineView } from './components/TimelineView';
 import { Toolbar } from './components/Toolbar';
 import { DetailPanel } from './components/DetailPanel';
 import './App.css';
@@ -48,6 +49,8 @@ export default function App() {
           ? <GroupedCanvas graph={view} state={state} dispatch={dispatch} onSelect={(key) => dispatch({ type: 'select', key })} />
           : state.viewMode === 'tree'
           ? <TreeView graph={view} state={state} dispatch={dispatch} onSelect={(key) => dispatch({ type: 'select', key })} />
+          : state.viewMode === 'timeline'
+          ? <TimelineView graph={view} state={state} onSelect={(key) => dispatch({ type: 'select', key })} />
           : <GraphCanvas graph={view} state={state} onSelect={(key) => dispatch({ type: 'select', key })} />}
         <DetailPanel graph={view} selectedKey={state.selectedKey} dispatch={dispatch} />
       </div>

@@ -2,7 +2,7 @@ import type { Capabilities } from '../core/model';
 
 export const largeCaps: Capabilities = {
   apiVersion: 3,
-  baseUrl: 'https://acme.atlassian.net',
+  baseUrl: 'https://jira.example.invalid',
   hasEpicLink: false,
   storyPointsFieldId: 'customfield_10016',
   startDateFieldId: 'customfield_10015',

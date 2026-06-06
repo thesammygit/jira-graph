@@ -209,14 +209,18 @@ export function SpotlightView({
                   title="Jump to Overview, zoomed on this ticket (adjusts Show level/filters if needed)">
                   ▦ Show in Overview
                 </button>
-                <a
-                  className="sp-open"
-                  href={h.url}
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  Open in Jira ↗
-                </a>
+                {/* scheme-guarded: only ever link plain http(s), never e.g.
+                    javascript: URLs from a hostile dataset */}
+                {/^https?:\/\//.test(h.url) && (
+                  <a
+                    className="sp-open"
+                    href={h.url}
+                    target="_blank"
+                    rel="noreferrer noopener"
+                  >
+                    Open in Jira ↗
+                  </a>
+                )}
               </div>
             </div>
 

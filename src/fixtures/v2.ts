@@ -2,7 +2,7 @@ import type { Capabilities } from '../core/model';
 
 export const v2Caps: Capabilities = {
   apiVersion: 2,
-  baseUrl: 'https://jira.example.com',
+  baseUrl: 'https://jira.example.invalid',
   hasEpicLink: true,
   epicLinkFieldId: 'customfield_10014',
   storyPointsFieldId: 'customfield_10024',

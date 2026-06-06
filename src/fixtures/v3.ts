@@ -2,7 +2,7 @@ import type { Capabilities } from '../core/model';
 
 export const v3Caps: Capabilities = {
   apiVersion: 3,
-  baseUrl: 'https://demo.atlassian.net',
+  baseUrl: 'https://jira.example.invalid',
   hasEpicLink: false,
   storyPointsFieldId: 'customfield_10016',
   startDateFieldId: 'customfield_10015',

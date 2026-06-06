@@ -35,7 +35,7 @@ Light theme example:
 - **Jira v2 / v3 + Epic Link compatibility** — normalizer handles `fields.parent` (Cloud v3) and the legacy "Epic Link" custom field (Server v2), detected at runtime by field name. When Epic Link is absent the epic edges simply disappear — no errors, no broken UI.
 - **Light / dark themes** — a CSS-variable theme system with a sidebar toggle (defaults to dark, persisted to `localStorage`). Every surface, including the React Flow chrome, follows the theme.
 - **Orthogonal edge routing** — a hand-rolled A\* router treats every ticket/container as an obstacle and draws right-angle paths *around* them: a connecting line never crosses under a ticket.
-- **Relationship-colored edges + legend** — edges are colored by relationship (blocks, relates, duplicates, clones, hierarchy) from a single palette; the sidebar legend lists the relationships present and toggles their visibility.
+- **Relationship-colored edges + legend** — edges are colored by relationship (blocks, relates, duplicates, clones, hierarchy) from a single palette; the sidebar legend lists the relationships present and toggles their visibility, and a **Link detail** control (Epic / Story / Task / All) hides low-level link clutter — e.g. "Story" shows only links whose tickets are story-level or higher.
 - **Click-a-line popup** — click any edge for a popover showing both tickets, the relationship with direction, plain-English phrasing, and open-in-Jira links.
 
 ---

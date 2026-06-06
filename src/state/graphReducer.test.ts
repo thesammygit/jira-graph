@@ -43,3 +43,8 @@ test('setViewMode, group depth, filters, select, selectEdge', () => {
   expect(e.selectedEdge?.id).toBe('x');
   expect(reducer(e, { type: 'clearEdge' }).selectedEdge).toBeNull();
 });
+
+test('linkLevel defaults to all and is settable', () => {
+  expect(initialState.linkLevel).toBe('all');
+  expect(reducer(initialState, { type: 'setLinkLevel', level: 'story' }).linkLevel).toBe('story');
+});

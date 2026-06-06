@@ -92,3 +92,12 @@ test('container-to-container links (epic↔epic) render as edges between the box
   const { edges } = build(initialState, g);
   expect(edges.some((e) => e.source === 'EPIC-1' && e.target === 'EPIC-2')).toBe(true);
 });
+
+test('linkLevel hides wires whose tickets sit below the chosen level', () => {
+  // Both module-graph links involve TASK-20 (a task), so story-and-up shows none.
+  const storyUp = { ...initialState, linkLevel: 'story' as const };
+  expect(build(storyUp).edges).toHaveLength(0);
+  // task-and-up keeps them (no subtask endpoints in this graph)
+  const taskUp = { ...initialState, linkLevel: 'task' as const };
+  expect(build(taskUp).edges.length).toBeGreaterThan(0);
+});

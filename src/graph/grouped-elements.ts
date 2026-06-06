@@ -106,12 +106,22 @@ export function toGroupedElements(graph: Graph, grouping: Grouping, layout: Grou
   // Readability rule: links BETWEEN top-level boxes are aggregated to ONE wall-to-wall
   // wire per (boxA, boxB, relation) — the gutters stay clean and Spotlight/EdgePopup
   // carry the ticket-level detail. Links WITHIN a box stay ticket-to-ticket.
+  // The linkLevel filter hides low-level noise: a wire renders only when BOTH linked
+  // tickets are at-or-above the chosen hierarchy level (e.g. 'story' hides task↔task).
+  const KIND_RANK: Record<string, number> = { epic: 3, story: 2, task: 1, bug: 1, other: 1, subtask: 0 };
+  const LEVEL_THRESHOLD: Record<GraphState['linkLevel'], number> = { epic: 3, story: 2, task: 1, all: 0 };
+  const levelThr = LEVEL_THRESHOLD[state.linkLevel];
   const edges: Edge[] = [];
   const seen = new Set<string>();
   for (const ge of graph.edges) {
     if (ge.kind !== 'link') continue;
     const relKey = ge.relation;
     if (state.hiddenRelations.has(relKey)) continue;
+    if (levelThr > 0) {
+      const sKind = nodeByKey.get(ge.source)?.type.kind ?? 'other';
+      const tKind = nodeByKey.get(ge.target)?.type.kind ?? 'other';
+      if ((KIND_RANK[sKind] ?? 1) < levelThr || (KIND_RANK[tKind] ?? 1) < levelThr) continue;
+    }
     const s = resolveEndpoint(ge.source), t = resolveEndpoint(ge.target);
     if (!s || !t || s === t) continue;
     const sTop = topMost(s), tTop = topMost(t);

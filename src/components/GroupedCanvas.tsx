@@ -27,7 +27,7 @@ function Canvas({ graph, state, dispatch, onEdgeClick, onNodeOpen }: { graph: Gr
     const wired = nodes.map((n) => n.type === 'container'
       ? { ...n, data: { ...n.data, onToggle: (k: string) => dispatch({ type: 'toggleCollapsed', key: k }) } } : n);
     return { nodes: wired, edges };
-  }, [graph, state.groupDepth, state.collapsed, state.hiddenTypes, state.hiddenStatuses, state.hiddenProjects, state.hiddenAssignees, state.hiddenRelations, state.selectedKey, state.search, state.focusKey, dispatch]);
+  }, [graph, state.groupDepth, state.collapsed, state.hiddenTypes, state.hiddenStatuses, state.hiddenProjects, state.hiddenAssignees, state.hiddenRelations, state.linkLevel, state.selectedKey, state.search, state.focusKey, dispatch]);
 
   const { fitView } = useReactFlow();
   useEffect(() => {

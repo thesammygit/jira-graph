@@ -2,6 +2,9 @@ import type { IssueKind, StatusCategory } from '../core/model';
 
 export type ViewMode = 'overview' | 'spotlight';
 export type GroupDepth = 1 | 2 | 3 | 4;
+/** Minimum hierarchy level a link's TICKETS must have for the wire to render:
+ *  'epic' = only epic↔epic, 'story' = story-and-up, 'task' = hide subtask links, 'all' = everything. */
+export type LinkLevel = 'epic' | 'story' | 'task' | 'all';
 
 export interface GraphState {
   viewMode: ViewMode;
@@ -14,6 +17,7 @@ export interface GraphState {
   hiddenProjects: Set<string>;
   hiddenAssignees: Set<string>;
   hiddenRelations: Set<string>;
+  linkLevel: LinkLevel;
   search: string;
   selectedKey: string | null;
   selectedEdge: { id: string; x: number; y: number; srcKey: string; tgtKey: string; relation: string; label: string } | null;
@@ -23,6 +27,7 @@ export const initialState: GraphState = {
   viewMode: 'overview', focusKey: null, focusHistory: [],
   groupDepth: 4, collapsed: new Set(),
   hiddenTypes: new Set(), hiddenStatuses: new Set(), hiddenProjects: new Set(), hiddenAssignees: new Set(), hiddenRelations: new Set(),
+  linkLevel: 'all',
   search: '', selectedKey: null, selectedEdge: null,
 };
 
@@ -37,6 +42,7 @@ export type Action =
   | { type: 'toggleProject'; key: string }
   | { type: 'toggleAssignee'; name: string }
   | { type: 'toggleRelation'; relation: string }
+  | { type: 'setLinkLevel'; level: LinkLevel }
   | { type: 'setSearch'; query: string }
   | { type: 'select'; key: string | null }
   | { type: 'selectEdge'; id: string; x: number; y: number; srcKey: string; tgtKey: string; relation: string; label: string }
@@ -68,6 +74,7 @@ export function reducer(state: GraphState, action: Action): GraphState {
     case 'toggleProject': return { ...state, hiddenProjects: toggle(state.hiddenProjects, action.key) };
     case 'toggleAssignee': return { ...state, hiddenAssignees: toggle(state.hiddenAssignees, action.name) };
     case 'toggleRelation': return { ...state, hiddenRelations: toggle(state.hiddenRelations, action.relation) };
+    case 'setLinkLevel': return { ...state, linkLevel: action.level };
     case 'setSearch': return { ...state, search: action.query };
     case 'select': return { ...state, selectedKey: action.key, selectedEdge: null };
     case 'selectEdge': return { ...state, selectedEdge: { id: action.id, x: action.x, y: action.y, srcKey: action.srcKey, tgtKey: action.tgtKey, relation: action.relation, label: action.label }, selectedKey: null };

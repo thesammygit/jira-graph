@@ -1,5 +1,14 @@
 import type { Dispatch } from 'react';
-import type { Action, GraphState, GroupDepth } from '../state/graphReducer';
+import type { Action, GraphState, GroupDepth, LinkLevel } from '../state/graphReducer';
+
+// Hide low-level link noise: a wire renders only when BOTH linked tickets are
+// at-or-above this level (e.g. "Story" hides task↔task clutter).
+const LINK_LEVELS: { id: LinkLevel; label: string; tip: string }[] = [
+  { id: 'epic', label: 'Epic', tip: 'Only links between epics' },
+  { id: 'story', label: 'Story', tip: 'Story-level and up — hides task/subtask link clutter' },
+  { id: 'task', label: 'Task', tip: 'Task-level and up — hides only subtask links' },
+  { id: 'all', label: 'All', tip: 'Every link' },
+];
 import type { IssueKind, Graph } from '../core/model';
 import type { Theme } from '../theme/useTheme';
 import { Legend } from './Legend';
@@ -91,6 +100,13 @@ export function Sidebar(props: {
 
       <div className="sb-section"><span className="sb-label">Relationships</span>
         <Legend graph={graph} state={state} dispatch={dispatch} />
+        <span className="sb-label" style={{ marginTop: 6 }}>Link detail</span>
+        <div className="sb-seg">
+          {LINK_LEVELS.map((l) => (
+            <button key={l.id} className={state.linkLevel === l.id ? 'on' : ''} title={l.tip}
+              onClick={() => dispatch({ type: 'setLinkLevel', level: l.id })}>{l.label}</button>
+          ))}
+        </div>
       </div>
 
       <div className="sb-foot">

@@ -15,7 +15,10 @@ export function TicketNode({ data }: { data: { node: GraphNode; selected: boolea
         <div className="ticket-compact-key" style={{ color: kindVar }}>{node.key}</div>
         <div className="ticket-compact-summary">{node.summary}</div>
         <div className="ticket-compact-foot">
-          <span className="ticket-compact-dot" style={{ background: statusVar }} title={node.status.name} />
+          <span className="ticket-compact-status"
+            style={{ color: statusVar, background: `color-mix(in srgb, ${statusVar} 14%, transparent)` }}>
+            {node.status.name}
+          </span>
           {node.storyPoints != null && <span className="ticket-compact-pts">{node.storyPoints}p</span>}
           {node.epicKey && node.type.kind !== 'epic' && (
             <span className="ticket-epic" title={node.epicSummary}>▣ {node.epicKey}</span>

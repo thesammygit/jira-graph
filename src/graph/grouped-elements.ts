@@ -59,6 +59,9 @@ export function toGroupedElements(graph: Graph, grouping: Grouping, layout: Grou
       id: pc.key, type: 'container', position: { x: pc.x, y: pc.y },
       ...(pc.parentKey ? { parentId: pc.parentKey, extent: 'parent' as const } : {}),
       data: { node: header, depth: pc.depth, collapsed: state.collapsed.has(pc.key), focal: state.focusKey === pc.key, width: pc.width, height: pc.height },
+      // top-level width/height (not just style) — controlled-mode consumers
+      // like the MiniMap need explicit dimensions on the user node
+      width: pc.width, height: pc.height,
       style: { width: pc.width, height: pc.height },
     });
   }
@@ -72,6 +75,7 @@ export function toGroupedElements(graph: Graph, grouping: Grouping, layout: Grou
       id: pm.key, type: 'ticket', parentId: pm.parentKey, extent: 'parent',
       position: { x: pm.x, y: pm.y },
       data: { node, selected: state.selectedKey === pm.key, search: state.search, compact: true, focal: state.focusKey === pm.key },
+      width: GROUP.CHIP_W, height: GROUP.CHIP_H,
       style: { width: GROUP.CHIP_W, height: GROUP.CHIP_H },
     });
   }

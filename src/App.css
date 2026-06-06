@@ -3,7 +3,7 @@ body { background: var(--bg); }
 * { box-sizing: border-box; }
 .app { display: flex; width: 100%; height: 100dvh; max-height: 100dvh; overflow: hidden; background: var(--bg); }
 .app-main { position: relative; flex: 1; min-width: 0; height: 100%; overflow: hidden; }
-.app-main > .react-flow { animation: view-in 220ms ease both; }
+.app-main > .react-flow { animation: view-in 220ms ease backwards; }
 @keyframes view-in { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: none; } }
 
 /* Back-to-map button (focus mode) */
@@ -33,4 +33,27 @@ body { background: var(--bg); }
 
 /* Done-ticket display modes (class set on .app-main from state.doneDisplay) */
 .done-dim .is-done { opacity: .45; }
-.done-strike .is-done { text-decoration: line-through; opacity: .7; }
+
+/* Strike = a diagonal line across the WHOLE card (electrical "cancelled" look),
+   plus a slight fade. Containers just strike their header text. */
+.done-strike .is-done { opacity: .75; }
+.done-strike .ticket.is-done,
+.done-strike .sp-card.is-done,
+.done-strike .sp-hero-card.is-done,
+.done-strike .td-row.is-done { position: relative; }
+.done-strike .ticket.is-done::after,
+.done-strike .sp-card.is-done::after,
+.done-strike .sp-hero-card.is-done::after,
+.done-strike .td-row.is-done::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: linear-gradient(to top right,
+    transparent calc(50% - 1.5px),
+    color-mix(in srgb, var(--ink) 60%, transparent) calc(50% - 0.5px),
+    color-mix(in srgb, var(--ink) 60%, transparent) calc(50% + 0.5px),
+    transparent calc(50% + 1.5px));
+}
+.done-strike .container-node.is-done .container-head { text-decoration: line-through; }

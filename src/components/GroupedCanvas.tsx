@@ -94,7 +94,10 @@ function Canvas({ graph, state, dispatch, onEdgeClick, onNodeOpen }: { graph: Gr
         style={{ background: 'var(--bg)' }}>
         <Background color="var(--bg-grid)" />
         <Controls />
-        <MiniMap pannable zoomable style={{ background: 'var(--surface)' }} />
+        <MiniMap pannable zoomable style={{ background: 'var(--surface)' }}
+          nodeColor={(n) => n.type === 'container' ? 'color-mix(in srgb, var(--accent) 14%, var(--surface))' : 'var(--ink-muted)'}
+          nodeStrokeColor={'var(--border-strong)'}
+          maskColor={'color-mix(in srgb, var(--bg) 55%, transparent)'} />
       </ReactFlow>
     </RoutingContext.Provider>
   );

@@ -7,7 +7,7 @@
 .td-title b { font-family: var(--font-mono); }
 
 .td-body { flex: 1; overflow: auto; padding: 18px 22px 40px; }
-.td-branch { animation: td-in 160ms ease both; }
+.td-branch { animation: td-in 160ms ease backwards; }
 .td-indented { margin-left: 26px; padding-left: 12px; border-left: 1.5px solid var(--border); }
 @keyframes td-in { from { opacity: 0; transform: translateY(3px); } to { opacity: 1; transform: none; } }
 

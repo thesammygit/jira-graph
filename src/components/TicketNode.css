@@ -11,7 +11,7 @@
   padding: 10px 12px;
   font-family: var(--font-sans);
   transition: box-shadow 150ms ease, transform 150ms ease;
-  animation: ticket-in 200ms ease both;
+  animation: ticket-in 200ms ease backwards;
 }
 .ticket:hover { box-shadow: var(--shadow-lg); transform: translateY(-1px); }
 .ticket.selected { box-shadow: 0 0 0 3px var(--accent); }
@@ -62,10 +62,12 @@
   gap: 5px;
   margin-top: 2px;
 }
-.ticket-compact-dot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
+.ticket-compact-status {
+  font-size: 8.5px;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 20px;
+  white-space: nowrap;
   flex-shrink: 0;
 }
 .ticket-compact-pts {

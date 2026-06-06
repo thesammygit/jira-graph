@@ -9,7 +9,7 @@
   border-radius: 14px;
   box-shadow: var(--shadow);
   transition: box-shadow 150ms ease, transform 150ms ease;
-  animation: container-in 240ms ease both;
+  animation: container-in 240ms ease backwards;
   backdrop-filter: blur(2px);
 }
 .container-node:hover {

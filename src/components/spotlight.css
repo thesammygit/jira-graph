@@ -184,7 +184,7 @@
   gap: 12px;
   position: relative;
   overflow: hidden;
-  animation: hero-in 180ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: hero-in 180ms cubic-bezier(0.22, 1, 0.36, 1) backwards;
 }
 
 @keyframes hero-in {
@@ -332,7 +332,7 @@
   gap: 6px;
   width: 100%;
   max-width: 220px;
-  animation: lane-in 220ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: lane-in 220ms cubic-bezier(0.22, 1, 0.36, 1) backwards;
 }
 .sp-lane:nth-child(2) { animation-delay: 30ms; }
 .sp-lane:nth-child(3) { animation-delay: 60ms; }

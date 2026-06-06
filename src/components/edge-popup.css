@@ -1,5 +1,5 @@
 .ep-scrim { position: fixed; inset: 0; z-index: 9; }
-.ep-pop { position: fixed; z-index: 10; width: 264px; transform: translate(-50%, 12px); background: var(--panel); border: 1px solid var(--border-strong); border-radius: var(--radius-lg); box-shadow: var(--shadow-lg); backdrop-filter: blur(10px); padding: 13px; color: var(--ink); font-family: var(--font-sans); animation: ep-in 140ms ease both; }
+.ep-pop { position: fixed; z-index: 10; width: 264px; transform: translate(-50%, 12px); background: var(--panel); border: 1px solid var(--border-strong); border-radius: var(--radius-lg); box-shadow: var(--shadow-lg); backdrop-filter: blur(10px); padding: 13px; color: var(--ink); font-family: var(--font-sans); animation: ep-in 140ms ease backwards; }
 @keyframes ep-in { from { opacity: 0; transform: translate(-50%, 6px); } to { opacity: 1; transform: translate(-50%, 12px); } }
 .ep-h { font-size: 10px; text-transform: uppercase; letter-spacing: .7px; color: var(--ink-muted); display: flex; justify-content: space-between; margin-bottom: 9px; }
 .ep-x { border: none; background: none; color: var(--ink-muted); font-size: 16px; cursor: pointer; }

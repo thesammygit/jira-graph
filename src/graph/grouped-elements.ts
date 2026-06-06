@@ -1,10 +1,24 @@
 import type { Edge, Node } from '@xyflow/react';
-import type { Graph } from '../core/model';
+import type { Graph, GraphNode } from '../core/model';
 import type { Grouping, GroupContainer } from './grouping';
 import { GROUP, type GroupedLayout } from './layouts/grouped';
 import type { GraphState } from '../state/graphReducer';
 import { relationStyle } from './relation-colors';
 import { isNodeVisible } from './visible';
+
+/** Max member chips a box renders before tucking the rest behind a +N-more cell. */
+export const MEMBER_CAP = 30;
+export const MORE_PREFIX = '__more__:';
+
+/** Synthetic member standing in for the tickets past the cap. */
+function moreChip(boxKey: string, hidden: number): GraphNode {
+  return {
+    id: `${MORE_PREFIX}${boxKey}`, key: `${MORE_PREFIX}${boxKey}`,
+    summary: `+${hidden} more`, type: { name: 'More', kind: 'other' },
+    status: { name: '', category: 'todo' }, hierarchyLevel: 0,
+    url: '', raw: null, project: { key: '', name: '' }, labels: [], components: [],
+  } as GraphNode;
+}
 
 export function filterGroupingForState(grouping: Grouping, state: GraphState): Grouping {
   const keepContainer = (container: GroupContainer): GroupContainer | null => {
@@ -12,7 +26,13 @@ export function filterGroupingForState(grouping: Grouping, state: GraphState): G
     const subContainers = container.subContainers
       .map(keepContainer)
       .filter((c): c is GroupContainer => Boolean(c));
-    const members = container.members.filter((member) => isNodeVisible(member, state));
+    let members = container.members.filter((member) => isNodeVisible(member, state));
+    // Pagination: huge flat boxes show the first MEMBER_CAP chips + a "+N more"
+    // cell — links from tucked-away tickets re-aggregate onto the box.
+    if (members.length > MEMBER_CAP && !state.expandedBoxes.has(container.key)) {
+      const hidden = members.length - MEMBER_CAP;
+      members = [...members.slice(0, MEMBER_CAP), moreChip(container.key, hidden)];
+    }
 
     if (!nodeVisible && subContainers.length === 0 && members.length === 0) return null;
     return { ...container, subContainers, members };
@@ -32,11 +52,15 @@ export function toGroupedElements(graph: Graph, grouping: Grouping, layout: Grou
   const visibleMembers = new Set<string>();
   const visibleContainers = new Set<string>();
 
-  // Walk grouping to record ownership + ancestor chains.
+  // Walk grouping to record ownership + ancestor chains (+ more-cell labels).
+  const moreLabels = new Map<string, string>();
   const walk = (c: GroupContainer, chain: string[]) => {
     const here = [c.key, ...chain];
     ancestorChain.set(c.key, here);
-    for (const m of c.members) ownerContainer.set(m.key, c.key);
+    for (const m of c.members) {
+      ownerContainer.set(m.key, c.key);
+      if (m.key.startsWith(MORE_PREFIX)) moreLabels.set(m.key, m.summary);
+    }
     for (const s of c.subContainers) walk(s, here);
   };
   grouping.containers.forEach((c) => walk(c, []));
@@ -68,6 +92,17 @@ export function toGroupedElements(graph: Graph, grouping: Grouping, layout: Grou
   for (const pm of layout.members) {
     const ownerCollapsed = state.collapsed.has(pm.parentKey) || isUnderCollapse(pm.parentKey);
     if (ownerCollapsed) continue;
+    if (pm.key.startsWith(MORE_PREFIX)) {
+      // "+N more" cell — expands its box to show every member
+      nodes.push({
+        id: pm.key, type: 'moreChip', parentId: pm.parentKey, extent: 'parent',
+        position: { x: pm.x, y: pm.y },
+        data: { boxKey: pm.key.slice(MORE_PREFIX.length), label: moreLabels.get(pm.key) ?? '+ more' },
+        width: GROUP.CHIP_W, height: GROUP.CHIP_H,
+        style: { width: GROUP.CHIP_W, height: GROUP.CHIP_H },
+      });
+      continue;
+    }
     const node = nodeByKey.get(pm.key); if (!node) continue;
     if (!isNodeVisible(node, state)) continue;
     visibleMembers.add(pm.key);

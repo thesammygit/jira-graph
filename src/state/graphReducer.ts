@@ -29,6 +29,8 @@ export interface GraphState {
   /** Pending "zoom to this ticket in Overview" request; `n` bumps so repeat
    *  reveals of the same key still re-trigger the zoom effect. */
   reveal: { key: string; n: number } | null;
+  /** Boxes the user opted into showing ALL members of (past the +N-more cap). */
+  expandedBoxes: Set<string>;
 }
 
 export const initialState: GraphState = {
@@ -39,6 +41,7 @@ export const initialState: GraphState = {
   hiddenLabels: new Set(), hiddenComponents: new Set(),
   doneDisplay: 'normal',
   search: '', selectedKey: null, selectedEdge: null, reveal: null,
+  expandedBoxes: new Set(),
 };
 
 export type Action =
@@ -59,6 +62,7 @@ export type Action =
   | { type: 'clearFilters' }
   | { type: 'revealInOverview'; node: GraphNode; minDepth: GroupDepth; ancestors: string[] }
   | { type: 'datasetDefaults'; nodeCount: number }
+  | { type: 'expandBox'; key: string }
   | { type: 'setSearch'; query: string }
   | { type: 'select'; key: string | null }
   | { type: 'selectEdge'; id: string; x: number; y: number; srcKey: string; tgtKey: string; relation: string; label: string }
@@ -155,7 +159,13 @@ export function reducer(state: GraphState, action: Action): GraphState {
         linkLevel: big ? 'story' : 'all',
         collapsed: new Set<string>(),
         reveal: null,
+        expandedBoxes: new Set<string>(),
       };
+    }
+    case 'expandBox': {
+      const expandedBoxes = new Set(state.expandedBoxes);
+      expandedBoxes.add(action.key);
+      return { ...state, expandedBoxes };
     }
     case 'setSearch': return { ...state, search: action.query };
     case 'select': return { ...state, selectedKey: action.key, selectedEdge: null };

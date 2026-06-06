@@ -79,6 +79,18 @@
   border-radius: 5px;
 }
 
+/* ── Far-zoom LOD variant + the "+N more" pagination cell ─────────────── */
+.ticket.compact.lod { display: flex; align-items: center; justify-content: center; }
+.ticket-lod-key { font: 700 22px var(--font-mono); letter-spacing: .5px; }
+.ticket.compact.more-chip {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+  cursor: pointer; border-style: dashed; background: color-mix(in srgb, var(--accent) 5%, var(--surface));
+  color: var(--ink); font-family: var(--font-sans);
+}
+.ticket.compact.more-chip:hover { border-color: var(--accent); }
+.more-chip-label { font-size: 14px; font-weight: 700; color: var(--accent); }
+.more-chip-hint { font-size: 9px; color: var(--ink-muted); text-transform: uppercase; letter-spacing: .6px; }
+
 /* ── Epic badge ──────────────────────────────────────────────────────── */
 .ticket-epic { font: 700 9px var(--font-mono); color: var(--kind-epic); background: color-mix(in srgb, var(--kind-epic) 16%, transparent); padding: 1px 6px; border-radius: 5px; display: inline-block; margin: 4px 0 2px; }
 

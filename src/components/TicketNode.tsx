@@ -1,12 +1,27 @@
 import { Handle, Position } from '@xyflow/react';
 import type { GraphNode } from '../core/model';
+import { useLod } from './lod-context';
 import './TicketNode.css';
 
 export function TicketNode({ data }: { data: { node: GraphNode; selected: boolean; search: string; compact?: boolean; focal?: boolean } }) {
   const { node, selected, search, compact, focal } = data;
+  const lod = useLod();
   const match = !!search && (node.key.toLowerCase().includes(search.toLowerCase()) || node.summary.toLowerCase().includes(search.toLowerCase()));
   const kindVar = `var(--kind-${node.type.kind})`;
   const statusVar = `var(--status-${node.status.category})`;
+
+  if (compact && lod) {
+    // Far-zoom level-of-detail: text is unreadable at this scale anyway, so
+    // render the cheapest possible card — kind border + status tint + key.
+    return (
+      <div className={`ticket compact lod ${selected ? 'selected' : ''} ${match ? 'match' : ''} ${focal ? 'focal' : ''} ${node.status.category === 'done' ? 'is-done' : ''}`}
+        style={{ borderTopColor: kindVar, background: `color-mix(in srgb, ${statusVar} 12%, var(--surface))` }}>
+        <Handle type="target" position={Position.Top} isConnectable={false} />
+        <span className="ticket-lod-key" style={{ color: kindVar }}>{node.key}</span>
+        <Handle type="source" position={Position.Bottom} isConnectable={false} />
+      </div>
+    );
+  }
 
   if (compact) {
     return (

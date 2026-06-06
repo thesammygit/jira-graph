@@ -90,6 +90,17 @@ export function generateIssues(spec: GenSpec = {}): any[] {
     }
   }
 
+  // One flat "backlog" epic per project — 60 direct children, the shape that
+  // exercises per-box chip pagination.
+  for (let p = 0; p < nProj; p++) {
+    const proj = `P${p + 1}`;
+    let n = issues.filter((i) => i.key.startsWith(`${proj}-`)).length;
+    const backlog = make(`${proj}-${++n}`, `Backlog & tech debt`, { name: 'Epic', subtask: false }, proj);
+    for (let t = 0; t < 60; t++) {
+      make(`${proj}-${++n}`, `${VERBS[t % VERBS.length]} backlog ${NOUNS[t % NOUNS.length]} ${t + 1}`, { name: 'Task', subtask: false }, proj, { key: backlog, typeName: 'Epic' });
+    }
+  }
+
   // Sparse deterministic links (~1 link per 25 tickets, like a real tracker).
   const byKey = new Map(issues.map((iss) => [iss.key, iss]));
   const link = (from: string, to: string, blocks: boolean) => {

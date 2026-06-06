@@ -93,6 +93,38 @@ test('container-to-container links (epic↔epic) render as edges between the box
   expect(edges.some((e) => e.source === 'EPIC-1' && e.target === 'EPIC-2')).toBe(true);
 });
 
+test('boxes over the member cap show MEMBER_CAP chips + a "+N more" cell; expandBox lifts it', () => {
+  const many: Graph = {
+    nodes: [n('BIG-0', 'epic', 2), ...Array.from({ length: 45 }, (_, i) => n(`BIG-${i + 1}`, 'task', 1))],
+    edges: Array.from({ length: 45 }, (_, i) => h('BIG-0', `BIG-${i + 1}`)),
+  };
+  const { nodes } = build(initialState, many);
+  const chips = nodes.filter((x) => x.type === 'ticket');
+  const more = nodes.find((x) => x.type === 'moreChip');
+  expect(chips).toHaveLength(30);
+  expect(more).toBeTruthy();
+  expect((more!.data as any).label).toBe('+15 more');
+  expect((more!.data as any).boxKey).toBe('BIG-0');
+  // expanding the box shows everything
+  const expanded = { ...initialState, expandedBoxes: new Set(['BIG-0']) };
+  const all = build(expanded, many);
+  expect(all.nodes.filter((x) => x.type === 'ticket')).toHaveLength(45);
+  expect(all.nodes.some((x) => x.type === 'moreChip')).toBe(false);
+});
+
+test('links from tickets tucked behind the +N-more cell re-aggregate onto the box', () => {
+  const many: Graph = {
+    nodes: [n('BIG-0', 'epic', 2), ...Array.from({ length: 40 }, (_, i) => n(`BIG-${i + 1}`, 'task', 1)),
+            n('OTHER-0', 'epic', 2), n('OTHER-1', 'task', 1)],
+    edges: [...Array.from({ length: 40 }, (_, i) => h('BIG-0', `BIG-${i + 1}`)), h('OTHER-0', 'OTHER-1'),
+            l('BIG-40', 'OTHER-1')], // BIG-40 is past the cap
+  };
+  const { edges } = build(initialState, many);
+  const wire = edges.find((e) => e.source === 'BIG-0' && e.target === 'OTHER-0');
+  expect(wire).toBeTruthy();
+  expect((wire!.data as any).srcKey).toBe('BIG-40');
+});
+
 test('depth cut re-aggregates truncated-ticket links to the visible ancestor boxes', () => {
   const epicDepth = { ...initialState, groupDepth: 1 as const };
   const { nodes, edges } = build(epicDepth);

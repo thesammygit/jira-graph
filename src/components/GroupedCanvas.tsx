@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { ReactFlow, ReactFlowProvider, Background, Controls, MiniMap, useReactFlow, type Node, type NodeTypes, type EdgeTypes } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { useEffect } from 'react';
@@ -11,12 +11,14 @@ import { filterGroupingForState, toGroupedElements } from '../graph/grouped-elem
 import { computeEdgePaths } from '../graph/edge-paths';
 import { TicketNode } from './TicketNode';
 import { ContainerNode } from './ContainerNode';
+import { MoreChipNode } from './MoreChipNode';
 import { RoutedEdge } from './RoutedEdge';
 import { RoutingContext } from './routing-context';
+import { LodContext } from './lod-context';
 
 // Module scope (stable identity, present on first paint) so React Flow doesn't log
 // "type not found" during the initial render race.
-const nodeTypes = { ticket: TicketNode, container: ContainerNode } as unknown as NodeTypes;
+const nodeTypes = { ticket: TicketNode, container: ContainerNode, moreChip: MoreChipNode } as unknown as NodeTypes;
 const edgeTypes = { routed: RoutedEdge } as unknown as EdgeTypes;
 
 export interface EdgeClickPayload { id: string; x: number; y: number; srcKey: string; tgtKey: string; relation: string; label: string }
@@ -24,11 +26,14 @@ function Canvas({ graph, state, dispatch, onEdgeClick, onNodeOpen }: { graph: Gr
   const { nodes, edges } = useMemo(() => {
     const grouping = filterGroupingForState(groupGraph(graph, state.groupDepth), state);
     const { nodes, edges } = toGroupedElements(graph, grouping, layoutGrouped(grouping), state);
-    // inject the collapse handler into container node data
+    // inject the collapse/expand handlers into container + more-chip node data
     const wired = nodes.map((n) => n.type === 'container'
-      ? { ...n, data: { ...n.data, onToggle: (k: string) => dispatch({ type: 'toggleCollapsed', key: k }), onOpen: (k: string) => onNodeOpen?.(k) } } : n);
+      ? { ...n, data: { ...n.data, onToggle: (k: string) => dispatch({ type: 'toggleCollapsed', key: k }), onOpen: (k: string) => onNodeOpen?.(k) } }
+      : n.type === 'moreChip'
+      ? { ...n, data: { ...n.data, onExpand: (k: string) => dispatch({ type: 'expandBox', key: k }) } }
+      : n);
     return { nodes: wired, edges };
-  }, [graph, state.groupDepth, state.collapsed, state.hiddenTypes, state.hiddenStatuses, state.hiddenProjects, state.hiddenAssignees, state.hiddenRelations, state.linkLevel, state.hiddenLabels, state.hiddenComponents, state.doneDisplay, state.selectedKey, state.search, state.focusKey, dispatch, onNodeOpen]);
+  }, [graph, state.groupDepth, state.collapsed, state.hiddenTypes, state.hiddenStatuses, state.hiddenProjects, state.hiddenAssignees, state.hiddenRelations, state.linkLevel, state.hiddenLabels, state.hiddenComponents, state.doneDisplay, state.selectedKey, state.search, state.focusKey, state.expandedBoxes, dispatch, onNodeOpen]);
 
   const { fitView } = useReactFlow();
   useEffect(() => {
@@ -81,12 +86,24 @@ function Canvas({ graph, state, dispatch, onEdgeClick, onNodeOpen }: { graph: Gr
     return { obstacles, topOf, ancestorsOf, paths };
   }, [nodes, edges]);
 
+  // Far-zoom flag for cheap LOD ticket cards — state flips only across the
+  // threshold, not on every pan/zoom frame. Only kicks in on big boards;
+  // small ones render full cards at any zoom (their DOM cost is trivial).
+  const [farOut, setFarOut] = useState(false);
+  const onMove = useCallback((_e: unknown, vp: { zoom: number }) => {
+    const next = vp.zoom < 0.35;
+    setFarOut((prev) => (prev === next ? prev : next));
+  }, []);
+  const lod = farOut && nodes.length > 300;
+
   return (
     <RoutingContext.Provider value={routingInfo}>
+    <LodContext.Provider value={lod}>
       {/* minZoom lets fitView zoom out far enough to show the whole project */}
       <ReactFlow nodes={nodes} edges={edges} nodeTypes={nodeTypes} edgeTypes={edgeTypes} fitView
         minZoom={0.08}
         onlyRenderVisibleElements
+        onMove={onMove}
         nodesConnectable={false}
         nodesDraggable={false}
         onNodeClick={(_e, n: Node) => { if (n.type === 'ticket') onNodeOpen?.(n.id); }}
@@ -100,6 +117,7 @@ function Canvas({ graph, state, dispatch, onEdgeClick, onNodeOpen }: { graph: Gr
           nodeStrokeColor={'var(--border-strong)'}
           maskColor={'color-mix(in srgb, var(--bg) 55%, transparent)'} />
       </ReactFlow>
+    </LodContext.Provider>
     </RoutingContext.Provider>
   );
 }

@@ -50,15 +50,19 @@ export function layoutGrouped(grouping: Grouping): GroupedLayout {
     return { width, height };
   }
 
-  // Place top-level containers in a wrapped row.
+  // Place top-level containers in wrapped rows. The row budget adapts to the
+  // total content area (≈16:10 board) so 5 boxes and 500 boxes both wrap into
+  // a sensible aspect ratio instead of a fixed-width vertical strip.
+  const sizes = grouping.containers.map((c) => measure(c, 0));
+  const totalArea = sizes.reduce((sum, s) => sum + (s.width + GROUP.CONTAINER_GAP) * (s.height + GROUP.CONTAINER_GAP), 0);
+  const MAXW = Math.max(1600, Math.sqrt(totalArea * 1.6));
   let x = 0, y = 0, rowH = 0;
-  const MAXW = 1600;
-  for (const c of grouping.containers) {
-    const size = measure(c, 0);
+  grouping.containers.forEach((c, i) => {
+    const size = sizes[i];
     if (x > 0 && x + size.width > MAXW) { x = 0; y += rowH + GROUP.CONTAINER_GAP; rowH = 0; }
     containers.push({ key: c.key, x, y, width: size.width, height: size.height, depth: 0 });
     x += size.width + GROUP.CONTAINER_GAP;
     rowH = Math.max(rowH, size.height);
-  }
+  });
   return { containers, members };
 }

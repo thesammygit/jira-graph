@@ -1,4 +1,4 @@
-import type { IssueKind, StatusCategory } from '../core/model';
+import type { GraphNode, IssueKind, StatusCategory } from '../core/model';
 
 export type ViewMode = 'overview' | 'spotlight' | 'tree';
 /** How completed (Done) tickets render: normal, dimmed, struck-through, or hidden. */
@@ -26,6 +26,9 @@ export interface GraphState {
   search: string;
   selectedKey: string | null;
   selectedEdge: { id: string; x: number; y: number; srcKey: string; tgtKey: string; relation: string; label: string } | null;
+  /** Pending "zoom to this ticket in Overview" request; `n` bumps so repeat
+   *  reveals of the same key still re-trigger the zoom effect. */
+  reveal: { key: string; n: number } | null;
 }
 
 export const initialState: GraphState = {
@@ -35,7 +38,7 @@ export const initialState: GraphState = {
   linkLevel: 'all',
   hiddenLabels: new Set(), hiddenComponents: new Set(),
   doneDisplay: 'normal',
-  search: '', selectedKey: null, selectedEdge: null,
+  search: '', selectedKey: null, selectedEdge: null, reveal: null,
 };
 
 export type Action =
@@ -54,6 +57,7 @@ export type Action =
   | { type: 'toggleComponent'; name: string }
   | { type: 'setDoneDisplay'; mode: DoneDisplay }
   | { type: 'clearFilters' }
+  | { type: 'revealInOverview'; node: GraphNode; minDepth: GroupDepth; ancestors: string[] }
   | { type: 'setSearch'; query: string }
   | { type: 'select'; key: string | null }
   | { type: 'selectEdge'; id: string; x: number; y: number; srcKey: string; tgtKey: string; relation: string; label: string }
@@ -104,6 +108,41 @@ export function reducer(state: GraphState, action: Action): GraphState {
       hiddenAssignees: new Set(), hiddenLabels: new Set(), hiddenComponents: new Set(),
       hiddenRelations: new Set(),
     };
+    case 'revealInOverview': {
+      // Jump to Overview, zoomed on the ticket — adjusting whatever currently
+      // hides it: too-shallow Show depth, collapsed ancestors, or any filter
+      // toggled against it. Settings are only ever LOOSENED, never tightened.
+      const { node, minDepth, ancestors } = action;
+      const without = <T,>(set: Set<T>, v: T): Set<T> => {
+        if (!set.has(v)) return set;
+        const next = new Set(set); next.delete(v); return next;
+      };
+      let collapsed = state.collapsed;
+      for (const a of ancestors) collapsed = without(collapsed, a);
+      // Multi-valued filters hide a ticket only when ALL its tags are off —
+      // re-enabling the first tag is enough to bring it back.
+      const labels = node.labels ?? [];
+      const hiddenLabels = labels.length > 0 && labels.every((l) => state.hiddenLabels.has(l))
+        ? without(state.hiddenLabels, labels[0]) : state.hiddenLabels;
+      const components = node.components ?? [];
+      const hiddenComponents = components.length > 0 && components.every((c) => state.hiddenComponents.has(c))
+        ? without(state.hiddenComponents, components[0]) : state.hiddenComponents;
+      return {
+        ...state,
+        viewMode: 'overview',
+        groupDepth: Math.max(state.groupDepth, minDepth) as GroupDepth,
+        collapsed,
+        hiddenTypes: without(state.hiddenTypes, node.type.kind),
+        hiddenStatuses: without(state.hiddenStatuses, node.status.category),
+        hiddenProjects: without(state.hiddenProjects, node.project.key),
+        hiddenAssignees: without(state.hiddenAssignees, node.assignee?.displayName ?? '__unassigned__'),
+        hiddenLabels, hiddenComponents,
+        doneDisplay: state.doneDisplay === 'hide' && node.status.category === 'done' ? 'dim' : state.doneDisplay,
+        focusKey: node.key, focusHistory: [],
+        selectedKey: node.key, selectedEdge: null,
+        reveal: { key: node.key, n: (state.reveal?.n ?? 0) + 1 },
+      };
+    }
     case 'setSearch': return { ...state, search: action.query };
     case 'select': return { ...state, selectedKey: action.key, selectedEdge: null };
     case 'selectEdge': return { ...state, selectedEdge: { id: action.id, x: action.x, y: action.y, srcKey: action.srcKey, tgtKey: action.tgtKey, relation: action.relation, label: action.label }, selectedKey: null };

@@ -3,10 +3,11 @@ import type { Graph, GraphNode } from '../core/model';
 import type { Action, GraphState } from '../state/graphReducer';
 import { spotlightModel } from '../graph/spotlight';
 import { relationStyle } from '../graph/relation-colors';
+import { revealAction } from '../graph/reveal';
 import './spotlight.css';
 
 /* ── Mini-card: a compact related-ticket button ─────────────────────── */
-function MiniCard({ node, accent, onOpen }: { node: GraphNode; accent: string; onOpen: (k: string) => void }) {
+function MiniCard({ node, accent, onOpen, onReveal }: { node: GraphNode; accent: string; onOpen: (k: string) => void; onReveal: (k: string) => void }) {
   const kindVar = `var(--kind-${node.type.kind})`;
   const statusVar = `var(--status-${node.status.category})`;
   return (
@@ -18,6 +19,10 @@ function MiniCard({ node, accent, onOpen }: { node: GraphNode; accent: string; o
     >
       <div className="sp-card-top">
         <span className="sp-card-k" style={{ color: kindVar }}>{node.key}</span>
+        <span
+          className="sp-card-reveal" role="button" tabIndex={-1} title="Show in Overview"
+          onClick={(e) => { e.stopPropagation(); onReveal(node.key); }}
+        >▦</span>
         <span className="sp-card-dot" style={{ background: statusVar }} title={node.status.name} />
       </div>
       <span className="sp-card-s">{node.summary}</span>
@@ -26,18 +31,19 @@ function MiniCard({ node, accent, onOpen }: { node: GraphNode; accent: string; o
 }
 
 /* ── Lane: a labeled column of related mini-cards ───────────────────── */
-function Lane({ label, accent, nodes, onOpen }: {
+function Lane({ label, accent, nodes, onOpen, onReveal }: {
   label: string;
   accent: string;
   nodes: GraphNode[];
   onOpen: (k: string) => void;
+  onReveal: (k: string) => void;
 }) {
   if (!nodes.length) return null;
   return (
     <div className="sp-lane">
       <div className="sp-lane-label" style={{ color: accent }}>{label}</div>
       {nodes.map((node) => (
-        <MiniCard key={node.key} node={node} accent={accent} onOpen={onOpen} />
+        <MiniCard key={node.key} node={node} accent={accent} onOpen={onOpen} onReveal={onReveal} />
       ))}
     </div>
   );
@@ -55,6 +61,10 @@ export function SpotlightView({
 }) {
   const model = state.focusKey ? spotlightModel(graph, state.focusKey) : null;
   const open = (k: string) => dispatch({ type: 'openSpotlight', key: k });
+  const reveal = (k: string) => {
+    const action = revealAction(graph, k);
+    if (action) dispatch(action);
+  };
 
   /* No focus yet */
   if (!model) {
@@ -130,6 +140,7 @@ export function SpotlightView({
               accent={epicColor}
               nodes={epicParentNodes}
               onOpen={open}
+              onReveal={reveal}
             />
             {hasTop && <div className="sp-top-connector" />}
           </div>
@@ -141,6 +152,7 @@ export function SpotlightView({
               accent={blocksColor}
               nodes={model.blockedBy}
               onOpen={open}
+              onReveal={reveal}
             />
             {hasLeft && <div className="sp-left-connector" />}
           </div>
@@ -191,8 +203,12 @@ export function SpotlightView({
                 <p className="sp-hero-desc">{h.description}</p>
               )}
 
-              {/* Footer: open in Jira */}
+              {/* Footer: show in Overview + open in Jira */}
               <div className="sp-hero-foot">
+                <button className="sp-open sp-reveal" onClick={() => reveal(h.key)}
+                  title="Jump to Overview, zoomed on this ticket (adjusts Show level/filters if needed)">
+                  ▦ Show in Overview
+                </button>
                 <a
                   className="sp-open"
                   href={h.url}
@@ -218,6 +234,7 @@ export function SpotlightView({
               accent={blocksColor}
               nodes={model.blocks}
               onOpen={open}
+              onReveal={reveal}
             />
           </div>
 
@@ -229,6 +246,7 @@ export function SpotlightView({
               accent={subtaskColor}
               nodes={model.children}
               onOpen={open}
+              onReveal={reveal}
             />
           </div>
 
@@ -240,6 +258,7 @@ export function SpotlightView({
                 accent={relatesColor}
                 nodes={model.relates}
                 onOpen={open}
+              onReveal={reveal}
               />
               {model.other.length > 0 && (
                 <Lane
@@ -247,6 +266,7 @@ export function SpotlightView({
                   accent={otherColor}
                   nodes={model.other.map((o) => o.node)}
                   onOpen={open}
+              onReveal={reveal}
                 />
               )}
             </div>

@@ -77,3 +77,37 @@ test('clearFilters resets every hidden set but leaves display prefs alone', () =
   expect(s.hiddenProjects.size + s.hiddenLabels.size + s.hiddenTypes.size).toBe(0);
   expect(s.doneDisplay).toBe('dim'); // display pref untouched
 });
+
+test('revealInOverview loosens whatever hides the ticket and arms the zoom', () => {
+  const node: any = {
+    key: 'CHK-9', summary: 's', type: { name: 'Task', kind: 'task' },
+    status: { name: 'Done', category: 'done' }, project: { key: 'CHK', name: 'Checkout' },
+    assignee: { displayName: 'Sam Brown', initials: 'SB' }, labels: ['backend'], components: [],
+  };
+  let s = reducer(initialState, { type: 'setGroupDepth', depth: 1 });
+  s = reducer(s, { type: 'toggleProject', key: 'CHK' });
+  s = reducer(s, { type: 'toggleLabel', label: 'backend' });
+  s = reducer(s, { type: 'setDoneDisplay', mode: 'hide' });
+  s = reducer(s, { type: 'toggleCollapsed', key: 'CHK-2' });
+  s = { ...s, viewMode: 'spotlight' as const };
+  s = reducer(s, { type: 'revealInOverview', node, minDepth: 3, ancestors: ['CHK-2', 'CHK-1'] });
+  expect(s.viewMode).toBe('overview');
+  expect(s.groupDepth).toBe(3);                       // raised to make a task visible
+  expect(s.hiddenProjects.has('CHK')).toBe(false);    // project unhidden
+  expect(s.hiddenLabels.has('backend')).toBe(false);  // label unhidden
+  expect(s.doneDisplay).toBe('dim');                  // done no longer fully hidden
+  expect(s.collapsed.has('CHK-2')).toBe(false);       // ancestor expanded
+  expect(s.focusKey).toBe('CHK-9');
+  expect(s.reveal).toEqual({ key: 'CHK-9', n: 1 });
+  // repeat reveal bumps the nonce so the zoom re-fires
+  expect(reducer(s, { type: 'revealInOverview', node, minDepth: 3, ancestors: [] }).reveal!.n).toBe(2);
+});
+
+test('revealInOverview never LOWERS the Show depth', () => {
+  const node: any = {
+    key: 'E1', summary: 's', type: { name: 'Epic', kind: 'epic' },
+    status: { name: 'To Do', category: 'todo' }, project: { key: 'P', name: 'P' }, labels: [], components: [],
+  };
+  const s = reducer(initialState, { type: 'revealInOverview', node, minDepth: 1, ancestors: [] });
+  expect(s.groupDepth).toBe(4); // stays at the user's deeper setting
+});

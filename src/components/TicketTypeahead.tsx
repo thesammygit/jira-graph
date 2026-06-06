@@ -2,11 +2,12 @@ import { useState } from 'react';
 import type { Dispatch } from 'react';
 import type { Graph } from '../core/model';
 import type { Action } from '../state/graphReducer';
+import { revealAction } from '../graph/reveal';
 
 /**
  * Unified search: typing live-highlights matches in the current view AND offers
- * a jump list — Enter (or clicking a result) opens that ticket in Spotlight.
- * One input replaces the old separate "Focus a ticket" + "Search" boxes.
+ * a jump list — Enter (or clicking a result) reveals that ticket in Overview,
+ * zoomed and highlighted (loosening Show depth/filters if they hide it).
  */
 export function TicketTypeahead({ graph, dispatch }: { graph: Graph; dispatch: Dispatch<Action> }) {
   const [q, setQ] = useState('');
@@ -18,12 +19,13 @@ export function TicketTypeahead({ graph, dispatch }: { graph: Graph; dispatch: D
     dispatch({ type: 'setSearch', query: value }); // live highlight in the current view
   };
   const jump = (key: string) => {
-    dispatch({ type: 'openSpotlight', key });
+    const action = revealAction(graph, key);
+    if (action) dispatch(action);
     type(''); // clear the input + highlight after jumping
   };
   return (
     <div className="tt">
-      <input className="sb-search" placeholder="Search · Enter jumps to ticket" value={q}
+      <input className="sb-search" placeholder="Search · Enter reveals ticket" value={q}
         onChange={(e) => type(e.target.value)}
         onKeyDown={(e) => {
           if (e.key === 'Enter' && matches[0]) jump(matches[0].key);

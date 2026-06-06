@@ -36,6 +36,20 @@ function Canvas({ graph, state, dispatch, onEdgeClick, onNodeOpen }: { graph: Gr
     return () => cancelAnimationFrame(id);
   }, [graph, state.groupDepth, nodes.length, edges.length, fitView]);
 
+  // Reveal request (search Enter / "Show in Overview"): zoom to the ticket and
+  // center it. Declared AFTER the general fit effect so its fitView call runs
+  // last in the same frame and wins the race when both fire together. Keyed on
+  // the reveal object (not `nodes`) so unrelated re-renders don't re-zoom.
+  const revealReady = !!state.reveal && nodes.some((n) => n.id === state.reveal!.key);
+  useEffect(() => {
+    if (!state.reveal || !revealReady) return;
+    const key = state.reveal.key;
+    const id = requestAnimationFrame(() => requestAnimationFrame(() =>
+      fitView({ nodes: [{ id: key }], duration: 400, padding: 0.4, maxZoom: 1.2 })));
+    return () => cancelAnimationFrame(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state.reveal, revealReady, fitView]);
+
   // Full absolute rects for every node (containers = the whole box) plus the
   // ancestry maps the gutter router needs. Cross-box wires then travel ONLY in
   // the whitespace between top-level boxes — never through a container. All

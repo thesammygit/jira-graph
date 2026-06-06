@@ -8,10 +8,13 @@ import { useRouting } from './routing-context';
  * sibling chips, and parallel/corridor-sharing wires fan into separate lanes
  * instead of rendering on top of each other.
  */
-export function RoutedEdge({ id, sourceX, sourceY, targetX, targetY, style, markerEnd }: EdgeProps) {
+export function RoutedEdge({ id, style, markerEnd }: EdgeProps) {
   const { paths } = useRouting();
-  // Fallback (first-paint race only): a plain elbow between the handles.
-  const d = paths[id] ?? `M ${sourceX},${sourceY} L ${sourceX},${(sourceY + targetY) / 2} L ${targetX},${(sourceY + targetY) / 2} L ${targetX},${targetY}`;
+  // No path yet = a big board still routing in the worker — render nothing
+  // and let the wire appear when its route lands (never a straight stand-in
+  // slicing through boxes).
+  const d = paths[id];
+  if (!d) return null;
   return (
     <BaseEdge
       id={id}

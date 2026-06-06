@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { ReactFlow, ReactFlowProvider, Background, Controls, MiniMap, useReactFlow, type Node, type NodeTypes, type EdgeTypes } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { useEffect } from 'react';
@@ -58,9 +58,12 @@ function Canvas({ graph, state, dispatch, onEdgeClick, onNodeOpen }: { graph: Gr
   // Full absolute rects for every node (containers = the whole box) plus the
   // ancestry maps the gutter router needs. Cross-box wires then travel ONLY in
   // the whitespace between top-level boxes — never through a container. All
-  // edge paths are routed here in ONE sequential pass (shared usage map +
-  // lane fan-out) so wires never render on top of each other.
-  const routingInfo = useMemo(() => {
+  // edge paths are routed in ONE sequential pass (shared usage map + lane
+  // fan-out) so wires never render on top of each other. Small boards route
+  // synchronously (paths present on first paint); big ones hand the same pure
+  // computation to a Web Worker and the wires appear when it answers.
+  const SYNC_EDGE_LIMIT = 150;
+  const geometry = useMemo(() => {
     const byId = new Map(nodes.map((n) => [n.id, n]));
     const absOf = (n: any): { x: number; y: number } => {
       let x = n.position.x, y = n.position.y, p = n.parentId ? byId.get(n.parentId) : undefined;
@@ -82,9 +85,34 @@ function Canvas({ graph, state, dispatch, onEdgeClick, onNodeOpen }: { graph: Gr
       ancestorsOf[n.id] = chain;
       topOf[n.id] = chain.length ? chain[chain.length - 1] : n.id;
     }
-    const paths = computeEdgePaths(edges, { obstacles, topOf, ancestorsOf });
-    return { obstacles, topOf, ancestorsOf, paths };
-  }, [nodes, edges]);
+    return { obstacles, topOf, ancestorsOf };
+  }, [nodes]);
+
+  const syncPaths = useMemo(
+    () => (edges.length <= SYNC_EDGE_LIMIT ? computeEdgePaths(edges, geometry) : null),
+    [edges, geometry],
+  );
+  const [asyncPaths, setAsyncPaths] = useState<Record<string, string>>({});
+  const workerRef = useRef<Worker | null>(null);
+  const seqRef = useRef(0);
+  useEffect(() => () => { workerRef.current?.terminate(); workerRef.current = null; }, []);
+  useEffect(() => {
+    if (syncPaths) return; // small board — routed inline already
+    workerRef.current ??= new Worker(new URL('../graph/route.worker.ts', import.meta.url), { type: 'module' });
+    const worker = workerRef.current;
+    const seq = ++seqRef.current;
+    const onMessage = (e: MessageEvent<{ seq: number; paths: Record<string, string> }>) => {
+      if (e.data.seq === seq) setAsyncPaths(e.data.paths); // ignore stale answers
+    };
+    worker.addEventListener('message', onMessage);
+    worker.postMessage({ seq, edges, info: geometry });
+    return () => worker.removeEventListener('message', onMessage);
+  }, [syncPaths, edges, geometry]);
+
+  const routingInfo = useMemo(
+    () => ({ ...geometry, paths: syncPaths ?? asyncPaths }),
+    [geometry, syncPaths, asyncPaths],
+  );
 
   // Far-zoom flag for cheap LOD ticket cards — state flips only across the
   // threshold, not on every pan/zoom frame. Only kicks in on big boards;

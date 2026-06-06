@@ -54,6 +54,22 @@ export function routeOrthogonal(
   const rects = obstacles.map((r) => inflate(r, pad));
   const usage = opts.usage;
 
+  // Spatial hash so A* blocked() checks query a local bucket instead of
+  // every obstacle — the difference between O(cells) and O(cells × rects)
+  // on boards with hundreds of boxes.
+  const CELL = 160;
+  const buckets = new Map<string, Rect[]>();
+  for (const r of rects) {
+    for (let cx = Math.floor(r.x / CELL); cx <= Math.floor((r.x + r.width) / CELL); cx++) {
+      for (let cy = Math.floor(r.y / CELL); cy <= Math.floor((r.y + r.height) / CELL); cy++) {
+        const k = `${cx}:${cy}`;
+        const arr = buckets.get(k);
+        if (arr) arr.push(r); else buckets.set(k, [r]);
+      }
+    }
+  }
+  const nearRects = (x: number, y: number): Rect[] => buckets.get(`${Math.floor(x / CELL)}:${Math.floor(y / CELL)}`) ?? [];
+
   // Fast path: two-bend L routes (HV and VH). Use whichever is clear of
   // obstacles AND of already-routed wires (else fall through to A*, which
   // pays a premium per shared cell and finds a parallel lane).
@@ -76,8 +92,10 @@ export function routeOrthogonal(
   const snapC = (x: number) => Math.round((x - minX) / grid), snapR = (y: number) => Math.round((y - minY) / grid);
 
   const blocked = (c: number, r: number) => {
-    const p = { x: gx(c), y: gy(r) };
-    return rects.some((rect) => ptInRect(p, rect));
+    const x = gx(c), y = gy(r);
+    const near = nearRects(x, y);
+    for (let i = 0; i < near.length; i++) if (ptInRect({ x, y }, near[i])) return true;
+    return false;
   };
   const start = { c: snapC(from.x), r: snapR(from.y) }, goal = { c: snapC(to.x), r: snapR(to.y) };
   // State key encodes (col, row, dir) so turn-penalty A* is correct

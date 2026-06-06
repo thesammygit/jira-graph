@@ -130,26 +130,99 @@ All layout algorithms, application state management, and graph traversal are **h
 ## Run locally
 
 ```bash
-npm install        # install dependencies from lockfile
-npm run dev        # start Vite dev server (http://localhost:5173)
-npm test           # run Vitest unit tests (76 tests)
-npm run build      # type-check + Vite production build → dist/
+npm ci --ignore-scripts   # lockfile-exact install, lifecycle scripts blocked
+npm run dev               # start Vite dev server (http://localhost:5173)
+npm test                  # run Vitest unit tests
+npm run build             # type-check + Vite production build → dist/
 ```
 
 The build emits `dist/` with relative asset paths (`base: './'`) so it can be served from any subdirectory, including GitHub Pages.
 
 ---
 
+## Running in secure / air-gapped environments
+
+The deployed app **makes zero external network requests** — see
+[SECURITY.md](SECURITY.md) for the full audit and the three enforcement
+layers (no egress code ships, a browser-enforced CSP, runtime-verified).
+This section is the operational runbook.
+
+### Option A — build inside, serve inside (network needed once, to npm only)
+
+```bash
+# 1. Install: lockfile-exact, lifecycle scripts blocked.
+#    The ONLY network access in this whole flow is npm pulling the locked
+#    dependency tarballs here (registry.npmjs.org).
+npm ci --ignore-scripts
+
+# 2. Verify the dependency tree before building (optional but recommended)
+npm audit                                   # expect: 0 vulnerabilities
+npm ls --omit=dev --all                     # inspect the full runtime tree
+
+# 3. Build — runs entirely offline
+npm run build
+
+# 4. Serve dist/ from ANY static file server, same origin only. e.g.:
+python3 -m http.server 8080 --directory dist
+# or: npx vite preview   (serves dist/ on :4173)
+```
+
+### Option B — fully air-gapped (no network ever inside the enclave)
+
+1. On a connected machine: `npm ci --ignore-scripts && npm run build`.
+2. Transfer **only `dist/`** (≈150 kB gzipped, plain static files — auditable
+   by hand) into the secure environment.
+3. Serve it with any static server. Nothing else is required: no Node, no
+   npm, no runtime dependencies inside the enclave.
+
+To rebuild inside the enclave instead, transfer the repo plus a populated
+npm cache and install with
+`npm ci --ignore-scripts --offline --cache ./npm-cache`.
+
+### Why no requests can happen
+
+- The production `index.html` carries a **Content-Security-Policy** of
+  `default-src 'none'` with everything (`script/style/img/connect/worker`)
+  restricted to `'self'` — the **browser** refuses any external request,
+  regardless of what code asks for it.
+- The bundle contains no fetch/XHR/WebSocket/sendBeacon call sites (the one
+  `fetch(` is Vite's same-origin modulepreload polyfill). The intranet
+  `JiraProvider` is not imported by the app and is tree-shaken out.
+- No web fonts, no CDN assets, no analytics, no service worker. Demo data
+  links point at the RFC 2606 `.invalid` TLD, which can never resolve.
+
+### Verify it yourself
+
+```bash
+# 1. Static: the only http(s) strings in the bundle are inert
+#    (SVG namespaces, library-docs link text, .invalid demo URLs)
+grep -oE "https?://[a-zA-Z0-9.-]+" dist/assets/*.js | sort -u
+
+# 2. The CSP is present in the built page
+grep -o 'Content-Security-Policy[^>]*' dist/index.html
+```
+
+Then open the served app with DevTools → Network: exercise every view and
+confirm every request stays on your origin. Any external attempt would also
+surface as a loud CSP violation in the console — silence is proof.
+
+> `npm run dev` is for development only: it opens a localhost-only HMR
+> websocket (still nothing external). Use the production build for any
+> security-sensitive deployment — the CSP is injected at build time.
+
+---
+
 ## Using real Jira at work
 
-Open [`src/providers/JiraProvider.ts`](src/providers/JiraProvider.ts).
-
-The skeleton provider:
+Open [`src/providers/JiraProvider.ts`](src/providers/JiraProvider.ts) — built for projects with thousands of tickets:
 
 - Shares the same `normalize()` function as `MockProvider` — Jira API shape differences are absorbed there, not in the provider.
-- Detects whether the instance exposes an "Epic Link" custom field (older Server/Data Center) by calling `/rest/api/3/field` and scanning field names — no hardcoded custom field IDs. (Pointing at a v2 instance means swapping the version in the field/search paths; the normalizer already handles both shapes.)
-- Fetches issues from `/rest/api/3/search/jql`. The current skeleton does a single un-paginated request (`fields=*all`); token-based pagination is marked `TODO(work)` in the file and is the one piece to finish against a live instance.
-- Requires a thin auth/CORS proxy to attach credentials and forward requests (out of scope for the public demo).
+- Detects whether the instance exposes an "Epic Link" custom field (older Server/Data Center) by calling `/rest/api/3/field` and scanning field names — no hardcoded custom field IDs.
+- **Token pagination** through `/rest/api/3/search/jql` (100 issues/page, progress callback) with a **strict fields whitelist** — never `fields=*all`.
+- **Cache + delta sync** — issue payloads persist in IndexedDB; reopening reads the cache and fetches only issues `updated >=` the last sync.
+- **Lazy mode** — `getRoots()` pulls just the epics; `getChildren()` pulls one hierarchy level at a time with batched `parent in (…)` JQL, driven by the Show-depth control (try the "Huge · lazy-loaded" demo dataset to see the exact flow).
+- Optional JQL scoping (`project = X`) wraps every request.
+- Requires a thin **same-origin** auth/CORS proxy to attach credentials and forward requests — which is exactly what the production CSP (`connect-src 'self'`) permits: even connected to live Jira, the browser cannot reach any other host.
 
 The data provider is the **only** thing that changes when connecting to a live instance. The entire visualization layer — filters, depth expansion, state machine, React components — is untouched.
 

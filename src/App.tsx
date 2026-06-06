@@ -4,6 +4,7 @@ import { MockProvider } from './providers/MockProvider';
 import { v3Issues, v3Caps } from './fixtures/v3';
 import { v2Issues, v2Caps } from './fixtures/v2';
 import { largeIssues, largeCaps } from './fixtures/large';
+import { hugeIssues, hugeCaps } from './fixtures/huge';
 import { initialState, reducer } from './state/graphReducer';
 import { GroupedCanvas } from './components/GroupedCanvas';
 import { SpotlightView } from './components/SpotlightView';
@@ -13,12 +14,13 @@ import { EdgePopup } from './components/EdgePopup';
 import { useTheme } from './theme/useTheme';
 import './App.css';
 
-type Dataset = 'v3' | 'v2' | 'v2-no-epic' | 'large';
+type Dataset = 'v3' | 'v2' | 'v2-no-epic' | 'large' | 'huge';
 
 function providerFor(ds: Dataset): MockProvider {
   if (ds === 'v3') return new MockProvider(v3Issues, v3Caps);
   if (ds === 'v2') return new MockProvider(v2Issues, v2Caps);
   if (ds === 'large') return new MockProvider(largeIssues, largeCaps);
+  if (ds === 'huge') return new MockProvider(hugeIssues, hugeCaps);
   return new MockProvider(v2Issues, { ...v2Caps, hasEpicLink: false }); // graceful degradation demo
 }
 

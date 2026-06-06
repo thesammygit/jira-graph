@@ -30,3 +30,7 @@ body { background: var(--bg); }
 .react-flow__controls-button { background: var(--surface) !important; border-bottom: 1px solid var(--border) !important; color: var(--ink) !important; fill: var(--ink) !important; }
 .react-flow__controls-button:hover { background: var(--surface-2) !important; }
 .react-flow__controls-button.canvas-lock.locked { color: var(--accent) !important; background: color-mix(in srgb, var(--accent) 13%, var(--surface)) !important; }
+
+/* Done-ticket display modes (class set on .app-main from state.doneDisplay) */
+.done-dim .is-done { opacity: .45; }
+.done-strike .is-done { text-decoration: line-through; opacity: .7; }

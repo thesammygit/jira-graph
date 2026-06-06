@@ -10,7 +10,7 @@ export function TicketNode({ data }: { data: { node: GraphNode; selected: boolea
 
   if (compact) {
     return (
-      <div className={`ticket compact ${selected ? 'selected' : ''} ${match ? 'match' : ''} ${focal ? 'focal' : ''}`} style={{ borderTopColor: kindVar }}>
+      <div className={`ticket compact ${selected ? 'selected' : ''} ${match ? 'match' : ''} ${focal ? 'focal' : ''} ${node.status.category === 'done' ? 'is-done' : ''}`} style={{ borderTopColor: kindVar }}>
         <Handle type="target" position={Position.Top} isConnectable={false} />
         <div className="ticket-compact-key" style={{ color: kindVar }}>{node.key}</div>
         <div className="ticket-compact-summary">{node.summary}</div>
@@ -27,7 +27,7 @@ export function TicketNode({ data }: { data: { node: GraphNode; selected: boolea
   }
 
   return (
-    <div className={`ticket ${selected ? 'selected' : ''} ${match ? 'match' : ''} ${focal ? 'focal' : ''}`} style={{ borderTopColor: kindVar }}>
+    <div className={`ticket ${selected ? 'selected' : ''} ${match ? 'match' : ''} ${focal ? 'focal' : ''} ${node.status.category === 'done' ? 'is-done' : ''}`} style={{ borderTopColor: kindVar }}>
       <Handle type="target" position={Position.Top} isConnectable={false} />
       <div className="ticket-row">
         <span className="ticket-key" style={{ color: kindVar }}>{node.key}</span>

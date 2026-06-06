@@ -1,8 +1,15 @@
 import type { Dispatch } from 'react';
-import type { Action, GraphState, GroupDepth, LinkLevel } from '../state/graphReducer';
+import type { Action, DoneDisplay, GraphState, GroupDepth, LinkLevel } from '../state/graphReducer';
 
 // Hide low-level link noise: a wire renders only when BOTH linked tickets are
 // at-or-above this level (e.g. "Story" hides task↔task clutter).
+const DONE_MODES: { id: DoneDisplay; label: string; tip: string }[] = [
+  { id: 'normal', label: 'Normal', tip: 'Done tickets look like any other' },
+  { id: 'dim', label: 'Dim', tip: 'Fade completed tickets' },
+  { id: 'strike', label: 'Strike', tip: 'Line through completed tickets' },
+  { id: 'hide', label: 'Hide', tip: 'Remove completed tickets from every view' },
+];
+
 const LINK_LEVELS: { id: LinkLevel; label: string; tip: string }[] = [
   { id: 'epic', label: 'Epic', tip: 'Only links between epics' },
   { id: 'story', label: 'Story', tip: 'Story-level and up — hides task/subtask link clutter' },
@@ -43,6 +50,12 @@ export function Sidebar(props: {
           onClick={() => dispatch({ type: 'setViewMode', viewMode: 'spotlight' })}
           title={canSpotlight ? 'Focus view for a single ticket and its relationships' : 'Spotlight a ticket — click one in Overview or use "Focus a ticket"'}>
           <span className="sb-ico">◎</span>Spotlight
+        </button>
+        <button
+          className={`sb-mode ${state.viewMode === 'tree' ? 'on' : ''}`}
+          onClick={() => dispatch({ type: 'setViewMode', viewMode: 'tree' })}
+          title={canSpotlight ? "The focused ticket's whole hierarchy, every ticket in detail" : 'Pick a ticket first — Tree shows everything in its hierarchy'}>
+          <span className="sb-ico">⌥</span>Tree
         </button>
       </nav>
 
@@ -85,8 +98,11 @@ export function Sidebar(props: {
 
       {(() => {
         const assignees = Array.from(new Set(graph.nodes.map((n) => n.assignee?.displayName ?? '__unassigned__')));
+  const labels = Array.from(new Set(graph.nodes.flatMap((n) => n.labels))).sort();
+  const components = Array.from(new Set(graph.nodes.flatMap((n) => n.components))).sort();
         if (assignees.length === 0) return null;
         return (
+          <>
           <div className="sb-section"><span className="sb-label">Assignees</span>
             <div className="sb-chips">{assignees.map((a) => (
               <button key={a} className={`sb-chip ${state.hiddenAssignees.has(a) ? '' : 'on'}`}
@@ -95,6 +111,21 @@ export function Sidebar(props: {
               </button>
             ))}</div>
           </div>
+
+          <div className="sb-section"><span className="sb-label">Labels</span>
+            <div className="sb-chips">{labels.map((l) => (
+              <button key={l} className={`sb-chip ${state.hiddenLabels.has(l) ? '' : 'on'}`}
+                onClick={() => dispatch({ type: 'toggleLabel', label: l })}>{l}</button>
+            ))}</div>
+          </div>
+
+          <div className="sb-section"><span className="sb-label">Components</span>
+            <div className="sb-chips">{components.map((c) => (
+              <button key={c} className={`sb-chip ${state.hiddenComponents.has(c) ? '' : 'on'}`}
+                onClick={() => dispatch({ type: 'toggleComponent', name: c })}>{c}</button>
+            ))}</div>
+          </div>
+          </>
         );
       })()}
 
@@ -105,6 +136,15 @@ export function Sidebar(props: {
           {LINK_LEVELS.map((l) => (
             <button key={l.id} className={state.linkLevel === l.id ? 'on' : ''} title={l.tip}
               onClick={() => dispatch({ type: 'setLinkLevel', level: l.id })}>{l.label}</button>
+          ))}
+        </div>
+      </div>
+
+      <div className="sb-section"><span className="sb-label">Done tickets</span>
+        <div className="sb-seg">
+          {DONE_MODES.map((m) => (
+            <button key={m.id} className={state.doneDisplay === m.id ? 'on' : ''} title={m.tip}
+              onClick={() => dispatch({ type: 'setDoneDisplay', mode: m.id })}>{m.label}</button>
           ))}
         </div>
       </div>

@@ -48,3 +48,23 @@ test('linkLevel defaults to all and is settable', () => {
   expect(initialState.linkLevel).toBe('all');
   expect(reducer(initialState, { type: 'setLinkLevel', level: 'story' }).linkLevel).toBe('story');
 });
+
+test('breadcrumbs: overview click starts fresh; revisiting a crumb truncates (no duplicates)', () => {
+  let s = reducer(initialState, { type: 'openSpotlight', key: 'A' });
+  s = reducer(s, { type: 'openSpotlight', key: 'B' });
+  s = reducer(s, { type: 'openSpotlight', key: 'C' });
+  expect(s.focusHistory).toEqual(['A', 'B']);
+  s = reducer(s, { type: 'openSpotlight', key: 'A' });   // revisit a crumb
+  expect(s.focusKey).toBe('A');
+  expect(s.focusHistory).toEqual([]);                     // truncated back — no dupes
+  s = reducer(s, { type: 'openSpotlight', key: 'B' });
+  s = reducer({ ...s, viewMode: 'overview' as const }, { type: 'openSpotlight', key: 'C' });
+  expect(s.focusHistory).toEqual([]);                     // fresh trail from overview
+});
+
+test('done display + label/component toggles', () => {
+  expect(initialState.doneDisplay).toBe('normal');
+  expect(reducer(initialState, { type: 'setDoneDisplay', mode: 'hide' }).doneDisplay).toBe('hide');
+  expect(reducer(initialState, { type: 'toggleLabel', label: 'backend' }).hiddenLabels.has('backend')).toBe(true);
+  expect(reducer(initialState, { type: 'toggleComponent', name: 'Payments' }).hiddenComponents.has('Payments')).toBe(true);
+});

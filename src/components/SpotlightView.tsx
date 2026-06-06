@@ -11,7 +11,7 @@ function MiniCard({ node, accent, onOpen }: { node: GraphNode; accent: string; o
   const statusVar = `var(--status-${node.status.category})`;
   return (
     <button
-      className="sp-card"
+      className={`sp-card ${node.status.category === 'done' ? 'is-done' : ''}`}
       style={{ borderLeftColor: accent }}
       onClick={() => onOpen(node.key)}
       title={`${node.key}: ${node.summary}`}
@@ -148,7 +148,7 @@ export function SpotlightView({
           {/* ── Hero card ────────────────────────────────────────── */}
           <div className="sp-hero">
             <div
-              className="sp-hero-card"
+              className={`sp-hero-card ${h.status.category === 'done' ? 'is-done' : ''}`}
               style={{ borderTopColor: kindVar }}
             >
               {/* Key + Epic badge */}

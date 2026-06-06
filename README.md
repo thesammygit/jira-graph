@@ -25,8 +25,10 @@ Light theme example:
 ## Features
 
 - **Overview** — all tickets grouped into nested container blocks: **epic ▸ story ▸ task ▸ subtask** (depth selectable 1–4, default full). Each container is collapsible; cross-epic links are drawn ticket-to-ticket. The clearest view for "what's in this epic and how epics connect." Includes a built-in React Flow minimap.
+- **Tree** — the focused ticket's entire hierarchy in detail: pick a task and see the whole tree it lives in (from its epic down), with the selected ticket highlighted; every row shows labels, components, points, status, and assignee.
 - **Spotlight** — a focus+context view: one ticket centered as the hero, with its relationships laid out in labeled lanes (Epic/Parent, Blocked by, Blocks, Subtasks, Relates to). Click any related ticket to re-center. Breadcrumb trail, Back button, and an Overview shortcut keep navigation fast.
-- **Project / assignee filters** — toggle whole projects or individual assignees (incl. Unassigned) on/off from the sidebar; combine with type/status/relationship filters.
+- **Project / assignee / label / component filters** — toggle whole projects, individual assignees (incl. Unassigned), labels, or components from the sidebar; a multi-tagged ticket stays visible while any of its tags is still on.
+- **Done-ticket display** — show completed tickets normally, dimmed, struck-through, or hide them everywhere.
 - **Type / status / edge filters** — show or hide nodes and edges by issue type, status, and relationship kind.
 - **Ticket typeahead** — a "Focus a ticket" typeahead (by key or title) jumps straight to Spotlight for any ticket.
 - **Epic badge on cards** — non-epic tickets show a small purple chip with their linked epic's key.
@@ -53,7 +55,7 @@ Design spec: [`docs/superpowers/specs/2026-06-05-jira-graph-redesign-routing-des
 
 ## Two views
 
-The app has two switchable views, both rendered from the same normalized graph. Switch between them in the sidebar.
+The app has three switchable views (Overview, Spotlight, Tree), both rendered from the same normalized graph. Switch between them in the sidebar.
 
 - **Overview** — tickets collapse into nested **container blocks** with the full hierarchy: **epic ▸ story ▸ task ▸ subtask** (depth selectable 1–4, default full). Each container is collapsible; cross-container links are drawn ticket-to-ticket. Includes a built-in minimap. The clearest view for "what's in this epic and how epics connect."
 

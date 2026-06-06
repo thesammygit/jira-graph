@@ -1,6 +1,6 @@
 import { isNodeVisible } from './visible';
 function node(over: any = {}): any { return { key: 'K', type: { kind: 'task' }, status: { category: 'todo' }, project: { key: 'CHK', name: 'C' }, assignee: { displayName: 'Sam' }, ...over }; }
-const base = { hiddenTypes: new Set(), hiddenStatuses: new Set(), hiddenProjects: new Set(), hiddenAssignees: new Set() };
+const base = { hiddenTypes: new Set(), hiddenStatuses: new Set(), hiddenProjects: new Set(), hiddenAssignees: new Set(), hiddenLabels: new Set(), hiddenComponents: new Set(), doneDisplay: 'normal' as const };
 
 test('visible by default', () => { expect(isNodeVisible(node(), base as any)).toBe(true); });
 test('hidden by type/status/project/assignee', () => {
@@ -11,4 +11,16 @@ test('hidden by type/status/project/assignee', () => {
 });
 test('unassigned matches the __unassigned__ key', () => {
   expect(isNodeVisible(node({ assignee: undefined }), { ...base, hiddenAssignees: new Set(['__unassigned__']) } as any)).toBe(false);
+});
+
+
+test('label/component filters hide only fully-toggled-off tagged tickets; done hides on doneDisplay=hide', () => {
+  const tagged = node({ labels: ['backend', 'api'], components: ['Payments'] });
+  expect(isNodeVisible(tagged, { ...base, hiddenLabels: new Set(['backend']) } as any)).toBe(true);            // one label still visible
+  expect(isNodeVisible(tagged, { ...base, hiddenLabels: new Set(['backend', 'api']) } as any)).toBe(false);    // all labels hidden
+  expect(isNodeVisible(tagged, { ...base, hiddenComponents: new Set(['Payments']) } as any)).toBe(false);
+  expect(isNodeVisible(node({}), { ...base, hiddenLabels: new Set(['backend']) } as any)).toBe(true);          // untagged unaffected
+  const done = node({ status: { category: 'done' } });
+  expect(isNodeVisible(done, { ...base, doneDisplay: 'hide' } as any)).toBe(false);
+  expect(isNodeVisible(done, { ...base, doneDisplay: 'strike' } as any)).toBe(true);
 });

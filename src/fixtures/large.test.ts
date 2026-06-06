@@ -39,3 +39,12 @@ test('large demo includes direct epic-to-epic dependencies', () => {
   });
   expect(epicLinks.length).toBeGreaterThanOrEqual(2);
 });
+
+test('large dataset carries labels and components for filtering', () => {
+  const g = normalizeIssues(largeIssues, largeCaps);
+  const labels = new Set(g.nodes.flatMap((n) => n.labels));
+  const components = new Set(g.nodes.flatMap((n) => n.components));
+  expect(labels.size).toBeGreaterThanOrEqual(4);
+  expect(components.size).toBeGreaterThanOrEqual(6);
+  expect(g.nodes.some((n) => n.labels.length === 0)).toBe(true); // some untagged
+});

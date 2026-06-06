@@ -18,6 +18,8 @@ export interface GraphNode {
   url: string;
   raw: unknown;
   project: { key: string; name: string };
+  labels: string[];
+  components: string[];
   description?: string;
   epicKey?: string;
   epicSummary?: string;

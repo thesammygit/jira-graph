@@ -96,6 +96,25 @@ interface IssueSpec {
   description?: string;
 }
 
+// Deterministic labels (cross-project) and components (per project) for filter demos.
+const LABEL_POOL = ['backend', 'frontend', 'api', 'infra', 'ux', 'performance'];
+const COMPONENTS: Record<string, string[]> = {
+  CHK: ['Payments', 'Cart', 'Checkout UI'],
+  SRCH: ['Query Engine', 'Ranking', 'Analytics'],
+  MOB: ['iOS', 'Android', 'Mobile Core'],
+};
+function labelsAt(idx: number): string[] {
+  // ~1 in 5 issues unlabeled; others get 1–2 labels
+  if (idx % 5 === 4) return [];
+  const first = LABEL_POOL[idx % LABEL_POOL.length];
+  return idx % 3 === 0 ? [first, LABEL_POOL[(idx + 2) % LABEL_POOL.length]] : [first];
+}
+function componentsAt(projectKey: string, idx: number): string[] {
+  const pool = COMPONENTS[projectKey] ?? [];
+  if (pool.length === 0 || idx % 6 === 5) return [];
+  return [pool[idx % pool.length]];
+}
+
 function makeIssue(spec: IssueSpec): any {
   const { key, summary, issuetype, project, idx, parent, issuelinks, description } = spec;
   const status = statusAt(idx);
@@ -113,6 +132,8 @@ function makeIssue(spec: IssueSpec): any {
       priority,
       assignee: assigneeAt(idx),
       project,
+      labels: labelsAt(idx),
+      components: componentsAt(project.key, idx).map((name) => ({ name })),
       ...(points !== undefined ? { customfield_10016: points } : {}),
       customfield_10015: dateFor(startDay),
       duedate: dateFor(dueDay),

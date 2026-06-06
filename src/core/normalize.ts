@@ -64,6 +64,8 @@ export function normalizeIssue(raw: any, caps: Capabilities): { node: GraphNode;
     project: f.project ? { key: f.project.key, name: f.project.name ?? f.project.key }
                        : { key: String(raw.key).split('-')[0], name: String(raw.key).split('-')[0] },
     description: adfToText(f.description) || undefined,
+    labels: Array.isArray(f.labels) ? f.labels.filter((l: any) => typeof l === 'string') : [],
+    components: Array.isArray(f.components) ? f.components.map((c: any) => c?.name).filter(Boolean) : [],
   };
   const edges: GraphEdge[] = [];
   edges.push(...hierarchyEdges(raw, kind, caps), ...linkEdges(raw));

@@ -25,9 +25,9 @@ function Canvas({ graph, state, dispatch, onEdgeClick, onNodeOpen }: { graph: Gr
     const { nodes, edges } = toGroupedElements(graph, grouping, layoutGrouped(grouping), state);
     // inject the collapse handler into container node data
     const wired = nodes.map((n) => n.type === 'container'
-      ? { ...n, data: { ...n.data, onToggle: (k: string) => dispatch({ type: 'toggleCollapsed', key: k }) } } : n);
+      ? { ...n, data: { ...n.data, onToggle: (k: string) => dispatch({ type: 'toggleCollapsed', key: k }), onOpen: (k: string) => onNodeOpen?.(k) } } : n);
     return { nodes: wired, edges };
-  }, [graph, state.groupDepth, state.collapsed, state.hiddenTypes, state.hiddenStatuses, state.hiddenProjects, state.hiddenAssignees, state.hiddenRelations, state.linkLevel, state.selectedKey, state.search, state.focusKey, dispatch]);
+  }, [graph, state.groupDepth, state.collapsed, state.hiddenTypes, state.hiddenStatuses, state.hiddenProjects, state.hiddenAssignees, state.hiddenRelations, state.linkLevel, state.hiddenLabels, state.hiddenComponents, state.doneDisplay, state.selectedKey, state.search, state.focusKey, dispatch, onNodeOpen]);
 
   const { fitView } = useReactFlow();
   useEffect(() => {
@@ -69,6 +69,7 @@ function Canvas({ graph, state, dispatch, onEdgeClick, onNodeOpen }: { graph: Gr
       <ReactFlow nodes={nodes} edges={edges} nodeTypes={nodeTypes} edgeTypes={edgeTypes} fitView
         minZoom={0.08}
         nodesConnectable={false}
+        nodesDraggable={false}
         onNodeClick={(_e, n: Node) => { if (n.type === 'ticket') onNodeOpen?.(n.id); }}
         onEdgeClick={(e, edge) => onEdgeClick?.({ id: edge.id, x: e.clientX, y: e.clientY, srcKey: (edge.data as any)?.srcKey ?? edge.source, tgtKey: (edge.data as any)?.tgtKey ?? edge.target, relation: (edge.data as any)?.rel ?? '', label: (edge.data as any)?.label ?? '' })}
         proOptions={{ hideAttribution: true }}

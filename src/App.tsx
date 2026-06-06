@@ -7,6 +7,7 @@ import { largeIssues, largeCaps } from './fixtures/large';
 import { initialState, reducer } from './state/graphReducer';
 import { GroupedCanvas } from './components/GroupedCanvas';
 import { SpotlightView } from './components/SpotlightView';
+import { TreeDetailView } from './components/TreeDetailView';
 import { Sidebar } from './components/Sidebar';
 import { EdgePopup } from './components/EdgePopup';
 import { useTheme } from './theme/useTheme';
@@ -36,9 +37,11 @@ export default function App() {
     <div className="app">
       <Sidebar graph={full} state={state} dispatch={dispatch}
         theme={theme} onToggleTheme={toggle} dataset={dataset} onDataset={setDataset} />
-      <main className="app-main">
+      <main className={`app-main done-${state.doneDisplay}`}>
         {state.viewMode === 'spotlight'
           ? <SpotlightView graph={full} state={state} dispatch={dispatch} />
+          : state.viewMode === 'tree'
+          ? <TreeDetailView graph={full} state={state} dispatch={dispatch} />
           : <GroupedCanvas graph={view} state={state} dispatch={dispatch}
               onNodeOpen={(id) => dispatch({ type: 'openSpotlight', key: id })}
               onEdgeClick={(p) => dispatch({ type: 'selectEdge', ...p })} />}

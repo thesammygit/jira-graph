@@ -8,6 +8,7 @@ import type { Action, GraphState } from '../state/graphReducer';
 import { groupGraph } from '../graph/grouping';
 import { GROUP, layoutGrouped } from '../graph/layouts/grouped';
 import { filterGroupingForState, toGroupedElements } from '../graph/grouped-elements';
+import { computeEdgePaths } from '../graph/edge-paths';
 import { TicketNode } from './TicketNode';
 import { ContainerNode } from './ContainerNode';
 import { RoutedEdge } from './RoutedEdge';
@@ -37,7 +38,9 @@ function Canvas({ graph, state, dispatch, onEdgeClick, onNodeOpen }: { graph: Gr
 
   // Full absolute rects for every node (containers = the whole box) plus the
   // ancestry maps the gutter router needs. Cross-box wires then travel ONLY in
-  // the whitespace between top-level boxes — never through a container.
+  // the whitespace between top-level boxes — never through a container. All
+  // edge paths are routed here in ONE sequential pass (shared usage map +
+  // lane fan-out) so wires never render on top of each other.
   const routingInfo = useMemo(() => {
     const byId = new Map(nodes.map((n) => [n.id, n]));
     const absOf = (n: any): { x: number; y: number } => {
@@ -60,8 +63,9 @@ function Canvas({ graph, state, dispatch, onEdgeClick, onNodeOpen }: { graph: Gr
       ancestorsOf[n.id] = chain;
       topOf[n.id] = chain.length ? chain[chain.length - 1] : n.id;
     }
-    return { obstacles, topOf, ancestorsOf };
-  }, [nodes]);
+    const paths = computeEdgePaths(edges, { obstacles, topOf, ancestorsOf });
+    return { obstacles, topOf, ancestorsOf, paths };
+  }, [nodes, edges]);
 
   return (
     <RoutingContext.Provider value={routingInfo}>

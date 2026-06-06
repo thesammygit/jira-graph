@@ -10,7 +10,10 @@ export interface RoutingInfo {
   topOf: Record<string, string>;
   /** node id → ancestor container ids, nearest first. */
   ancestorsOf: Record<string, string[]>;
+  /** edge id → precomputed SVG path — ALL edges routed in one pass so wires
+   *  fan into separate lanes instead of rendering on top of each other. */
+  paths: Record<string, string>;
 }
 
-export const RoutingContext = createContext<RoutingInfo>({ obstacles: [], topOf: {}, ancestorsOf: {} });
+export const RoutingContext = createContext<RoutingInfo>({ obstacles: [], topOf: {}, ancestorsOf: {}, paths: {} });
 export const useRouting = () => useContext(RoutingContext);

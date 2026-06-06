@@ -4,6 +4,38 @@ export interface Pt { x: number; y: number }
 const inflate = (r: Rect, p: number): Rect => ({ x: r.x - p, y: r.y - p, width: r.width + 2 * p, height: r.height + 2 * p });
 const ptInRect = (p: Pt, r: Rect) => p.x > r.x && p.x < r.x + r.width && p.y > r.y && p.y < r.y + r.height;
 
+// ── Shared-corridor usage ─────────────────────────────────────────────────
+// Routed paths stamp the cells they pass through; later edges pay a cost
+// premium for re-using a cell, so parallel wires spread into separate lanes
+// instead of rendering on top of each other.
+const USAGE_Q = 7; // quantization (px) — half the gutter grid, so adjacent lanes differ
+export const usageKey = (x: number, y: number) => `${Math.round(x / USAGE_Q)}:${Math.round(y / USAGE_Q)}`;
+
+/** Stamp a polyline's cells into `usage`. Endpoint stubs (within `skip` px of
+ *  either end) stay unstamped — fan-in at a shared handle is intentional. */
+export function markUsage(pts: Pt[], usage: Set<string>, skip = 12): void {
+  if (pts.length < 2) return;
+  const first = pts[0], last = pts[pts.length - 1];
+  const nearEnd = (x: number, y: number) =>
+    (Math.abs(x - first.x) + Math.abs(y - first.y)) < skip || (Math.abs(x - last.x) + Math.abs(y - last.y)) < skip;
+  for (let i = 1; i < pts.length; i++) {
+    const a = pts[i - 1], b = pts[i];
+    const steps = Math.max(1, Math.ceil((Math.abs(b.x - a.x) + Math.abs(b.y - a.y)) / USAGE_Q));
+    for (let s = 0; s <= steps; s++) {
+      const x = a.x + ((b.x - a.x) * s) / steps, y = a.y + ((b.y - a.y) * s) / steps;
+      if (!nearEnd(x, y)) usage.add(usageKey(x, y));
+    }
+  }
+}
+
+function segUsed(a: Pt, b: Pt, usage: Set<string>): boolean {
+  const steps = Math.max(1, Math.ceil((Math.abs(b.x - a.x) + Math.abs(b.y - a.y)) / USAGE_Q));
+  for (let s = 0; s <= steps; s++) {
+    if (usage.has(usageKey(a.x + ((b.x - a.x) * s) / steps, a.y + ((b.y - a.y) * s) / steps))) return true;
+  }
+  return false;
+}
+
 // Does axis-aligned segment a-b cross rect interior?
 function segHits(a: Pt, b: Pt, r: Rect): boolean {
   const x1 = Math.min(a.x, b.x), x2 = Math.max(a.x, b.x), y1 = Math.min(a.y, b.y), y2 = Math.max(a.y, b.y);
@@ -15,15 +47,19 @@ export function routeOrthogonal(
   from: Pt,
   to: Pt,
   obstacles: Rect[],
-  opts: { padding?: number; grid?: number; sourceGap?: number; targetGap?: number } = {},
+  opts: { padding?: number; grid?: number; sourceGap?: number; targetGap?: number; usage?: Set<string> } = {},
 ): Pt[] {
   const pad = opts.padding ?? 12;
   const grid = Math.max(4, opts.grid ?? 16);
   const rects = obstacles.map((r) => inflate(r, pad));
+  const usage = opts.usage;
 
-  // Fast path: two-bend L routes (HV and VH). Use whichever is clear.
+  // Fast path: two-bend L routes (HV and VH). Use whichever is clear of
+  // obstacles AND of already-routed wires (else fall through to A*, which
+  // pays a premium per shared cell and finds a parallel lane).
   for (const mid of [{ x: to.x, y: from.y }, { x: from.x, y: to.y }]) {
-    if (clear(from, mid, rects) && clear(mid, to, rects)) {
+    if (clear(from, mid, rects) && clear(mid, to, rects)
+      && !(usage && (segUsed(from, mid, usage) || segUsed(mid, to, usage)))) {
       return applyEndpointGaps(simplify([from, mid, to]), opts.sourceGap ?? 0, opts.targetGap ?? 0);
     }
   }
@@ -81,7 +117,8 @@ export function routeOrthogonal(
       if (nc < 0 || nr < 0 || nc >= cols || nr >= rows) continue;
       if (blocked(nc, nr)) continue;
       const turn = cur.dir !== -1 && cur.dir !== d ? grid : 0;
-      const ng = cur.g + grid + turn;
+      const crowd = usage?.has(usageKey(gx(nc), gy(nr))) ? grid * 3 : 0; // shared-lane premium
+      const ng = cur.g + grid + turn + crowd;
       const nsk = stateKey(nc, nr, d);
       if (closed.has(nsk)) continue;
       if ((best.get(nsk) ?? Infinity) <= ng) continue;

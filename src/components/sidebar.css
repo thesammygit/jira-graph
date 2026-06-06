@@ -40,6 +40,9 @@
 .sb-clear { background: none; border: none; color: var(--ink-muted); font-size: 11px; padding: 3px 6px; border-radius: 6px; cursor: pointer; flex-shrink: 0; }
 .sb-clear:hover { color: var(--ink); background: color-mix(in srgb, var(--accent) 12%, transparent); }
 .sb-acc-body { display: flex; flex-direction: column; gap: 10px; padding: 4px 10px 11px; }
+/* segs span the body so 4-option rows (Done, Links) never clip on the right */
+.sb-acc-body .sb-seg { display: flex; width: 100%; }
+.sb-acc-body .sb-seg button { flex: 1 1 0; padding: 5px 0; text-align: center; }
 
 /* Label + segmented-control pairs inside Display */
 .sb-row { display: flex; flex-direction: column; gap: 4px; }

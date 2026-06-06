@@ -1,4 +1,4 @@
-import { subtreeModel } from './subtree';
+import { forestModel, subtreeModel } from './subtree';
 import type { Graph } from '../core/model';
 
 function n(key: string, kind: any = 'task'): any { return { id: key, key, summary: key, type: { name: kind, kind }, status: { name: 's', category: 'todo' }, project: { key: 'P', name: 'P' }, labels: [], components: [], hierarchyLevel: 1, url: '', raw: {} }; }
@@ -23,6 +23,16 @@ test('selecting a deep task climbs to the epic and returns the WHOLE tree', () =
 test('selecting the epic itself returns its subtree', () => {
   const m = subtreeModel(graph, 'EPIC')!;
   expect(m.root.node.key).toBe('EPIC');
+});
+
+test('forestModel returns every root tree — trees with children first, loose tickets after', () => {
+  const g: Graph = {
+    nodes: [n('LONE'), n('EPIC', 'epic'), n('S1', 'story'), n('EPIC2', 'epic'), n('S9', 'story')],
+    edges: [h('EPIC', 'S1'), h('EPIC2', 'S9')],
+  };
+  const forest = forestModel(g);
+  expect(forest.map((t) => t.node.key)).toEqual(['EPIC', 'EPIC2', 'LONE']);
+  expect(forest[0].children[0].node.key).toBe('S1');
 });
 
 test('null for an unknown key; orphan tickets are their own root', () => {

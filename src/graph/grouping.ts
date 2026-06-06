@@ -8,6 +8,12 @@ export interface GroupContainer {
 }
 export interface Grouping { containers: GroupContainer[] }
 
+/**
+ * depth = how many hierarchy LEVELS are shown (1 = just the root epics,
+ * 2 = epics + their stories, 3 = + tasks, 4 = + subtasks). Tickets below the
+ * cut are NOT flattened — they're hidden entirely; their links re-aggregate
+ * to the nearest visible ancestor in grouped-elements.
+ */
 export function groupGraph(graph: Graph, depth: number): Grouping {
   const nodeMap = new Map(graph.nodes.map((n) => [n.key, n]));
   const childrenOf = new Map<string, string[]>();
@@ -20,28 +26,19 @@ export function groupGraph(graph: Graph, depth: number): Grouping {
     hasParent.add(e.target);
   }
 
-  const descendantsFlat = (key: string): GraphNode[] => {
-    const out: GraphNode[] = [];
-    for (const c of childrenOf.get(key) ?? []) {
-      const cn = nodeMap.get(c);
-      if (cn) out.push(cn);
-      out.push(...descendantsFlat(c));
-    }
-    return out;
-  };
-
   const build = (key: string, level: number): GroupContainer => {
     const node = nodeMap.get(key) ?? null;
     const subContainers: GroupContainer[] = [];
     const members: GraphNode[] = [];
-    for (const childKey of childrenOf.get(key) ?? []) {
-      const childHasChildren = (childrenOf.get(childKey) ?? []).length > 0;
-      if (level + 1 < depth && childHasChildren) {
-        subContainers.push(build(childKey, level + 1));
-      } else {
-        const cn = nodeMap.get(childKey);
-        if (cn) members.push(cn);
-        members.push(...descendantsFlat(childKey)); // flatten anything below the depth boundary
+    if (level + 1 < depth) { // children live one level down — past the cut they vanish
+      for (const childKey of childrenOf.get(key) ?? []) {
+        const childHasChildren = (childrenOf.get(childKey) ?? []).length > 0;
+        if (childHasChildren && level + 2 < depth) {
+          subContainers.push(build(childKey, level + 1)); // its own children are still shown
+        } else {
+          const cn = nodeMap.get(childKey);
+          if (cn) members.push(cn); // leaf chip — grandchildren (if any) fall past the cut
+        }
       }
     }
     return { key, node, subContainers, members };

@@ -1,38 +1,76 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { Dispatch } from 'react';
 import type { Graph, GraphNode } from '../core/model';
 import type { Action, GraphState } from '../state/graphReducer';
-import { subtreeModel, type SubtreeNode } from '../graph/subtree';
+import { forestModel, subtreeModel, type SubtreeNode } from '../graph/subtree';
 import './tree-detail.css';
 
-/** Full-detail view of the hierarchy tree the focused ticket lives in. */
+/**
+ * Full-detail hierarchy view. With a focused ticket it shows that ticket's
+ * whole tree (focus highlighted); with no focus it shows EVERY tree — all
+ * epics and loose tickets. Any branch with children can be collapsed.
+ */
 export function TreeDetailView({ graph, state, dispatch }: { graph: Graph; state: GraphState; dispatch: Dispatch<Action> }) {
+  // Collapsed branches are view-local: leaving Tree and coming back starts fresh.
+  const [closed, setClosed] = useState<Set<string>>(new Set());
+  const toggle = (key: string) => setClosed((prev) => {
+    const next = new Set(prev);
+    if (next.has(key)) next.delete(key); else next.add(key);
+    return next;
+  });
+
   const model = state.focusKey ? subtreeModel(graph, state.focusKey) : null;
-  if (!model) {
-    return <div className="td-empty">Pick a ticket first — click one in Overview or use "Focus a ticket" — then Tree shows everything in its hierarchy.</div>;
-  }
+  const trees = model ? [model.root] : forestModel(graph);
+  const focusKey = model?.focusKey ?? '';
+
   return (
     <div className="tree-detail">
       <div className="td-bar">
         <button onClick={() => dispatch({ type: 'setViewMode', viewMode: 'spotlight' })}>◎ Spotlight</button>
         <button onClick={() => dispatch({ type: 'setViewMode', viewMode: 'overview' })}>▦ Overview</button>
-        <span className="td-title">
-          Tree of <b style={{ color: `var(--kind-${model.root.node.type.kind})` }}>{model.root.node.key}</b> · {model.root.node.summary}
-        </span>
+        {model ? (
+          <span className="td-title">
+            Tree of <b style={{ color: `var(--kind-${model.root.node.type.kind})` }}>{model.root.node.key}</b> · {model.root.node.summary}
+          </span>
+        ) : (
+          <span className="td-title">All trees · click a ticket to open it in Spotlight</span>
+        )}
       </div>
       <div className="td-body">
-        <Branch item={model.root} focusKey={model.focusKey} depth={0} dispatch={dispatch} />
+        {trees.map((t) => (
+          <Branch key={t.node.key} item={t} focusKey={focusKey} depth={0} closed={closed} onToggle={toggle} dispatch={dispatch} />
+        ))}
       </div>
     </div>
   );
 }
 
-function Branch({ item, focusKey, depth, dispatch }: { item: SubtreeNode; focusKey: string; depth: number; dispatch: Dispatch<Action> }) {
+function countDescendants(item: SubtreeNode): number {
+  return item.children.reduce((sum, c) => sum + 1 + countDescendants(c), 0);
+}
+
+function Branch({ item, focusKey, depth, closed, onToggle, dispatch }: {
+  item: SubtreeNode; focusKey: string; depth: number;
+  closed: Set<string>; onToggle: (key: string) => void; dispatch: Dispatch<Action>;
+}) {
+  const hasKids = item.children.length > 0;
+  const isClosed = closed.has(item.node.key);
   return (
     <div className={`td-branch ${depth > 0 ? 'td-indented' : ''}`}>
-      <Row node={item.node} focal={item.node.key === focusKey} dispatch={dispatch} />
-      {item.children.map((c) => (
-        <Branch key={c.node.key} item={c} focusKey={focusKey} depth={depth + 1} dispatch={dispatch} />
+      <div className="td-rowline">
+        {hasKids ? (
+          <button className="td-caret" onClick={() => onToggle(item.node.key)}
+            aria-expanded={!isClosed} aria-label={isClosed ? 'Expand' : 'Collapse'}>
+            {isClosed ? '▸' : '▾'}
+          </button>
+        ) : (
+          <span className="td-caret td-caret-blank" />
+        )}
+        <Row node={item.node} focal={item.node.key === focusKey} dispatch={dispatch} />
+        {isClosed && <span className="td-hidden-count">{countDescendants(item)} hidden</span>}
+      </div>
+      {!isClosed && item.children.map((c) => (
+        <Branch key={c.node.key} item={c} focusKey={focusKey} depth={depth + 1} closed={closed} onToggle={onToggle} dispatch={dispatch} />
       ))}
     </div>
   );

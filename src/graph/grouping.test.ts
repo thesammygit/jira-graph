@@ -10,15 +10,22 @@ const graph: Graph = {
   edges: [h('EPIC-1', 'STORY-10'), h('STORY-10', 'TASK-20'), h('STORY-10', 'SUB-30'), h('EPIC-1', 'TASK-99')],
 };
 
-test('depth 1: epic container holds ALL descendants flat, no sub-containers', () => {
+test('depth 1: only the root containers — every descendant is hidden, not flattened', () => {
   const g = groupGraph(graph, 1);
   const epic = g.containers.find((c) => c.key === 'EPIC-1')!;
   expect(epic.subContainers).toHaveLength(0);
-  expect(epic.members.map((m) => m.key).sort()).toEqual(['STORY-10', 'SUB-30', 'TASK-20', 'TASK-99']);
+  expect(epic.members).toHaveLength(0);
 });
 
-test('depth 2: epic holds STORY-10 as a sub-container (with its members) + TASK-99 as a direct member', () => {
+test('depth 2: epic shows its direct children as chips; anything deeper is hidden', () => {
   const g = groupGraph(graph, 2);
+  const epic = g.containers.find((c) => c.key === 'EPIC-1')!;
+  expect(epic.subContainers).toHaveLength(0); // STORY-10 is a chip, not a box — its children are cut
+  expect(epic.members.map((m) => m.key).sort()).toEqual(['STORY-10', 'TASK-99']);
+});
+
+test('depth 3: story becomes a box holding its children; nothing below level 3 appears', () => {
+  const g = groupGraph(graph, 3);
   const epic = g.containers.find((c) => c.key === 'EPIC-1')!;
   expect(epic.subContainers.map((s) => s.key)).toEqual(['STORY-10']);
   expect(epic.subContainers[0].members.map((m) => m.key).sort()).toEqual(['SUB-30', 'TASK-20']);

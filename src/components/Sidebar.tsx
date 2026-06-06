@@ -80,7 +80,7 @@ export function Sidebar(props: {
         <button
           className={`sb-mode ${state.viewMode === 'tree' ? 'on' : ''}`}
           onClick={() => dispatch({ type: 'setViewMode', viewMode: 'tree' })}
-          title={canSpotlight ? "The focused ticket's whole hierarchy, every ticket in detail" : 'Pick a ticket first — Tree shows everything in its hierarchy'}>
+          title={canSpotlight ? "The focused ticket's whole hierarchy, every ticket in detail" : 'Every tree — all epics and their tickets, collapsible'}>
           <span className="sb-ico">⌥</span>Tree
         </button>
       </nav>
@@ -89,7 +89,7 @@ export function Sidebar(props: {
 
       <Section id="display" title="Display" open={open.display} onToggle={toggleOpen}>
         {state.viewMode === 'overview' && (
-          <Row label="Depth" tip="How deep the Overview boxes nest">
+          <Row label="Show" tip="Deepest ticket level shown — Epic shows only the epic boxes, Story adds their stories, and so on">
             <div className="sb-seg">{DEPTHS.map((d) => (
               <button key={d} className={state.groupDepth === d ? 'on' : ''} onClick={() => dispatch({ type: 'setGroupDepth', depth: d })}>{DEPTH_LABEL[d]}</button>
             ))}</div>

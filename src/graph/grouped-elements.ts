@@ -76,6 +76,11 @@ export function toGroupedElements(graph: Graph, grouping: Grouping, layout: Grou
     });
   }
 
+  // Ticket-hierarchy parents — lets endpoints truncated below the depth cut
+  // (absent from the grouping entirely) climb to a rendered ancestor.
+  const hierParent = new Map<string, string>();
+  for (const e of graph.edges) if (e.kind === 'hierarchy') hierParent.set(e.target, e.source);
+
   // Resolve an endpoint: if the member is visible, return its key. Otherwise climb
   // the ownerContainer/ancestor chain and return the FIRST visible container hit —
   // i.e. the innermost (nearest) collapsed container that absorbs this member.
@@ -84,10 +89,22 @@ export function toGroupedElements(graph: Graph, grouping: Grouping, layout: Grou
     if (visibleContainers.has(key)) return key; // the endpoint is itself a rendered container (epic/story/task box)
     // Not directly visible: climb to the nearest visible ancestor container.
     // Members climb via ownerContainer; container keys climb via their ancestor chain.
-    let container = ownerContainer.get(key) ?? (ancestorChain.has(key) ? ancestorChain.get(key)![1] : undefined);
+    let container: string | undefined = ownerContainer.get(key) ?? (ancestorChain.has(key) ? ancestorChain.get(key)![1] : undefined);
+    if (!container) {
+      // Deliberately filtered out (type/project/label/…): the link disappears with it.
+      const gn = nodeByKey.get(key);
+      if (gn && !isNodeVisible(gn, state)) return null;
+      // Truncated by the depth cut: walk up the ticket hierarchy instead.
+      let p = hierParent.get(key);
+      while (p) {
+        if (visibleMembers.has(p) || visibleContainers.has(p)) return p;
+        p = hierParent.get(p);
+      }
+      return null;
+    }
     while (container) {
       if (visibleContainers.has(container)) return container; // innermost visible ancestor
-      const chain = ancestorChain.get(container) ?? [];
+      const chain: string[] = ancestorChain.get(container) ?? [];
       container = chain[1]; // parent container
     }
     return null;

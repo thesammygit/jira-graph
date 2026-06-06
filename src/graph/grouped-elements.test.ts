@@ -93,6 +93,17 @@ test('container-to-container links (epic↔epic) render as edges between the box
   expect(edges.some((e) => e.source === 'EPIC-1' && e.target === 'EPIC-2')).toBe(true);
 });
 
+test('depth cut re-aggregates truncated-ticket links to the visible ancestor boxes', () => {
+  const epicDepth = { ...initialState, groupDepth: 1 as const };
+  const { nodes, edges } = build(epicDepth);
+  // only the epic boxes render…
+  expect(nodes.map((x) => x.id).sort()).toEqual(['EPIC-1', 'EPIC-2']);
+  // …and the TASK-20→STORY-30 link climbs to an EPIC-1→EPIC-2 wire
+  const wire = edges.find((e) => e.source === 'EPIC-1' && e.target === 'EPIC-2');
+  expect(wire).toBeTruthy();
+  expect((wire!.data as any).srcKey).toBe('TASK-20');
+});
+
 test('linkLevel hides wires whose tickets sit below the chosen level', () => {
   // Both module-graph links involve TASK-20 (a task), so story-and-up shows none.
   const storyUp = { ...initialState, linkLevel: 'story' as const };

@@ -53,6 +53,7 @@ export type Action =
   | { type: 'toggleLabel'; label: string }
   | { type: 'toggleComponent'; name: string }
   | { type: 'setDoneDisplay'; mode: DoneDisplay }
+  | { type: 'clearFilters' }
   | { type: 'setSearch'; query: string }
   | { type: 'select'; key: string | null }
   | { type: 'selectEdge'; id: string; x: number; y: number; srcKey: string; tgtKey: string; relation: string; label: string }
@@ -97,6 +98,12 @@ export function reducer(state: GraphState, action: Action): GraphState {
     case 'toggleLabel': return { ...state, hiddenLabels: toggle(state.hiddenLabels, action.label) };
     case 'toggleComponent': return { ...state, hiddenComponents: toggle(state.hiddenComponents, action.name) };
     case 'setDoneDisplay': return { ...state, doneDisplay: action.mode };
+    case 'clearFilters': return {
+      ...state,
+      hiddenTypes: new Set(), hiddenStatuses: new Set(), hiddenProjects: new Set(),
+      hiddenAssignees: new Set(), hiddenLabels: new Set(), hiddenComponents: new Set(),
+      hiddenRelations: new Set(),
+    };
     case 'setSearch': return { ...state, search: action.query };
     case 'select': return { ...state, selectedKey: action.key, selectedEdge: null };
     case 'selectEdge': return { ...state, selectedEdge: { id: action.id, x: action.x, y: action.y, srcKey: action.srcKey, tgtKey: action.tgtKey, relation: action.relation, label: action.label }, selectedKey: null };

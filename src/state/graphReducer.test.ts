@@ -68,3 +68,12 @@ test('done display + label/component toggles', () => {
   expect(reducer(initialState, { type: 'toggleLabel', label: 'backend' }).hiddenLabels.has('backend')).toBe(true);
   expect(reducer(initialState, { type: 'toggleComponent', name: 'Payments' }).hiddenComponents.has('Payments')).toBe(true);
 });
+
+test('clearFilters resets every hidden set but leaves display prefs alone', () => {
+  let s = reducer(initialState, { type: 'toggleProject', key: 'CHK' });
+  s = reducer(s, { type: 'toggleLabel', label: 'backend' });
+  s = reducer(s, { type: 'setDoneDisplay', mode: 'dim' });
+  s = reducer(s, { type: 'clearFilters' });
+  expect(s.hiddenProjects.size + s.hiddenLabels.size + s.hiddenTypes.size).toBe(0);
+  expect(s.doneDisplay).toBe('dim'); // display pref untouched
+});

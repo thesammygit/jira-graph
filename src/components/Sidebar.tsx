@@ -24,7 +24,7 @@ const DONE_MODES: { id: DoneDisplay; label: string; tip: string }[] = [
   { id: 'hide', label: 'Hide', tip: 'Remove completed tickets from every view' },
 ];
 
-type Dataset = 'v3' | 'v2' | 'v2-no-epic' | 'large' | 'huge';
+type Dataset = 'v3' | 'v2' | 'v2-no-epic' | 'large' | 'huge' | 'lazy';
 type SectionId = 'display' | 'filters' | 'legend';
 
 const OPEN_KEY = 'jira-graph-sidebar-open';
@@ -191,7 +191,7 @@ export function Sidebar(props: {
 
       <div className="sb-foot">
         <select className="sb-select" value={dataset} onChange={(e) => onDataset(e.target.value as Dataset)}>
-          <option value="large">Large demo (3 projects)</option><option value="huge">Huge demo (~4k tickets)</option><option value="v3">Cloud v3</option><option value="v2">Server v2</option><option value="v2-no-epic">v2 · no Epic Link</option>
+          <option value="large">Large demo (3 projects)</option><option value="huge">Huge demo (~4k tickets)</option><option value="lazy">Huge · lazy-loaded (server-paged)</option><option value="v3">Cloud v3</option><option value="v2">Server v2</option><option value="v2-no-epic">v2 · no Epic Link</option>
         </select>
         <button className="sb-theme" onClick={onToggleTheme} aria-label="Toggle theme">{theme === 'dark' ? '☀ Light' : '☾ Dark'}</button>
       </div>

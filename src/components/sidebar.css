@@ -1,6 +1,16 @@
 .sidebar { width: 224px; flex-shrink: 0; height: 100%; overflow-y: auto; overflow-x: hidden; background: var(--surface-2); border-right: 1px solid var(--border); padding: 16px 14px; display: flex; flex-direction: column; gap: 14px; font-family: var(--font-sans); color: var(--ink); }
 .sb-brand { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 15px; }
 .sb-logo { color: var(--accent); }
+.sb-collapse { margin-left: auto; background: none; border: none; color: var(--ink-muted); font-size: 14px; padding: 2px 7px; border-radius: 6px; cursor: pointer; }
+.sb-collapse:hover { background: color-mix(in srgb, var(--accent) 12%, transparent); color: var(--ink); }
+
+/* Collapsed icon rail */
+.sidebar.rail { width: 54px; padding: 14px 9px; gap: 6px; align-items: center; }
+.sb-rail-btn { width: 36px; height: 34px; display: flex; align-items: center; justify-content: center; background: none; border: none; border-radius: 8px; color: var(--ink-muted); font-size: 15px; cursor: pointer; transition: background 120ms, color 120ms; }
+.sb-rail-btn:hover { background: color-mix(in srgb, var(--accent) 12%, transparent); color: var(--ink); }
+.sb-rail-btn.on { background: color-mix(in srgb, var(--accent) 16%, transparent); color: var(--ink); }
+.sb-rail-logo { color: var(--accent); font-size: 17px; }
+.sb-rail-spacer { margin-top: auto; }
 .sb-modes { display: flex; flex-direction: column; gap: 2px; }
 .sb-mode { position: relative; display: flex; align-items: center; gap: 9px; padding: 8px 10px; border: none; background: none; border-radius: 8px; color: var(--ink-muted); font-size: 13px; cursor: pointer; text-align: left; transition: background 120ms, color 120ms; }
 .sb-mode:hover { background: color-mix(in srgb, var(--accent) 10%, transparent); }

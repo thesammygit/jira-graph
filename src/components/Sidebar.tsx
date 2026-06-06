@@ -37,6 +37,14 @@ function loadOpen(): Record<SectionId, boolean> {
   }
 }
 
+const RAIL_KEY = 'jira-graph-sidebar-rail';
+
+const MODES: { id: 'overview' | 'spotlight' | 'tree'; icon: string; label: string }[] = [
+  { id: 'overview', icon: '▦', label: 'Overview' },
+  { id: 'spotlight', icon: '◎', label: 'Spotlight' },
+  { id: 'tree', icon: '⌥', label: 'Tree' },
+];
+
 export function Sidebar(props: {
   graph: Graph; state: GraphState; dispatch: Dispatch<Action>;
   theme: Theme; onToggleTheme: () => void; dataset: Dataset; onDataset: (d: Dataset) => void;
@@ -49,6 +57,29 @@ export function Sidebar(props: {
     try { localStorage.setItem(OPEN_KEY, JSON.stringify(next)); } catch { /* ignore */ }
     return next;
   });
+  const [rail, setRail] = useState<boolean>(() => {
+    try { return localStorage.getItem(RAIL_KEY) === '1'; } catch { return false; }
+  });
+  const toggleRail = () => setRail((v) => {
+    try { localStorage.setItem(RAIL_KEY, v ? '0' : '1'); } catch { /* ignore */ }
+    return !v;
+  });
+
+  if (rail) {
+    // Collapsed: a slim icon rail — modes + theme + expand.
+    return (
+      <aside className="sidebar rail">
+        <button className="sb-rail-btn sb-rail-logo" onClick={toggleRail} title="Expand sidebar">◳</button>
+        <button className="sb-rail-btn" onClick={toggleRail} title="Expand sidebar" aria-label="Expand sidebar">»</button>
+        {MODES.map((m) => (
+          <button key={m.id} className={`sb-rail-btn ${state.viewMode === m.id ? 'on' : ''}`} title={m.label}
+            onClick={() => dispatch({ type: 'setViewMode', viewMode: m.id })}>{m.icon}</button>
+        ))}
+        <div className="sb-rail-spacer" />
+        <button className="sb-rail-btn" onClick={onToggleTheme} title="Toggle theme">{theme === 'dark' ? '☀' : '☾'}</button>
+      </aside>
+    );
+  }
 
   const projects = Array.from(new Map(graph.nodes.map((n) => [n.project.key, n.project])).values());
   const assignees = Array.from(new Set(graph.nodes.map((n) => n.assignee?.displayName ?? '__unassigned__')));
@@ -62,7 +93,10 @@ export function Sidebar(props: {
 
   return (
     <aside className="sidebar">
-      <div className="sb-brand"><span className="sb-logo">◳</span> Jira Graph</div>
+      <div className="sb-brand">
+        <span className="sb-logo">◳</span> Jira Graph
+        <button className="sb-collapse" onClick={toggleRail} title="Collapse sidebar" aria-label="Collapse sidebar">«</button>
+      </div>
 
       <nav className="sb-modes">
         <button

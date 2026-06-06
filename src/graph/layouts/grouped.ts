@@ -1,7 +1,9 @@
 import type { Grouping, GroupContainer } from '../grouping';
 
 export const GROUP = {
-  CHIP_W: 168, CHIP_H: 88, GAP: 12, PAD: 14, HEADER_H: 34, COLS: 3, CONTAINER_GAP: 72,
+  // GAP/PAD leave real alleys between chips and along walls — in-box wires
+  // route through them (see graph/edge-paths.ts) and need the clearance.
+  CHIP_W: 168, CHIP_H: 88, GAP: 20, PAD: 16, HEADER_H: 34, COLS: 3, CONTAINER_GAP: 72,
 };
 
 export interface PlacedContainer { key: string; x: number; y: number; width: number; height: number; parentKey?: string; depth: number }

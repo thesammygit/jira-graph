@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import type { Dispatch } from 'react';
 import type { Graph } from '../core/model';
 import type { Action } from '../state/graphReducer';
@@ -11,9 +11,17 @@ import { revealAction } from '../graph/reveal';
  */
 export function TicketTypeahead({ graph, dispatch }: { graph: Graph; dispatch: Dispatch<Action> }) {
   const [q, setQ] = useState('');
-  const matches = q.trim()
-    ? graph.nodes.filter((n) => n.key.toLowerCase().includes(q.toLowerCase()) || n.summary.toLowerCase().includes(q.toLowerCase())).slice(0, 8)
-    : [];
+  // One lowercase haystack per graph — not two toLowerCase() per node per keystroke.
+  const index = useMemo(() => graph.nodes.map((n) => ({ n, hay: `${n.key} ${n.summary}`.toLowerCase() })), [graph]);
+  const matches = useMemo(() => {
+    const needle = q.trim().toLowerCase();
+    if (!needle) return [];
+    const out = [];
+    for (const { n, hay } of index) {
+      if (hay.includes(needle)) { out.push(n); if (out.length === 8) break; }
+    }
+    return out;
+  }, [q, index]);
   const type = (value: string) => {
     setQ(value);
     dispatch({ type: 'setSearch', query: value }); // live highlight in the current view

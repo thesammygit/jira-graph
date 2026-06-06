@@ -86,6 +86,7 @@ function Canvas({ graph, state, dispatch, onEdgeClick, onNodeOpen }: { graph: Gr
       {/* minZoom lets fitView zoom out far enough to show the whole project */}
       <ReactFlow nodes={nodes} edges={edges} nodeTypes={nodeTypes} edgeTypes={edgeTypes} fitView
         minZoom={0.08}
+        onlyRenderVisibleElements
         nodesConnectable={false}
         nodesDraggable={false}
         onNodeClick={(_e, n: Node) => { if (n.type === 'ticket') onNodeOpen?.(n.id); }}

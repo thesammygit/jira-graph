@@ -32,7 +32,12 @@ export default function App() {
   const provider = useMemo(() => providerFor(dataset), [dataset]);
   const { theme, toggle } = useTheme();
 
-  useEffect(() => { provider.getGraph().then(setFull); }, [provider]);
+  useEffect(() => {
+    provider.getGraph().then((g) => {
+      setFull(g);
+      dispatch({ type: 'datasetDefaults', nodeCount: g.nodes.length });
+    });
+  }, [provider]);
   useEffect(() => { setView(full); }, [full]);
 
   return (

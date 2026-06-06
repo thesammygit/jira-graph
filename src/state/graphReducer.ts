@@ -58,6 +58,7 @@ export type Action =
   | { type: 'setDoneDisplay'; mode: DoneDisplay }
   | { type: 'clearFilters' }
   | { type: 'revealInOverview'; node: GraphNode; minDepth: GroupDepth; ancestors: string[] }
+  | { type: 'datasetDefaults'; nodeCount: number }
   | { type: 'setSearch'; query: string }
   | { type: 'select'; key: string | null }
   | { type: 'selectEdge'; id: string; x: number; y: number; srcKey: string; tgtKey: string; relation: string; label: string }
@@ -141,6 +142,19 @@ export function reducer(state: GraphState, action: Action): GraphState {
         focusKey: node.key, focusHistory: [],
         selectedKey: node.key, selectedEdge: null,
         reveal: { key: node.key, n: (state.reveal?.n ?? 0) + 1 },
+      };
+    }
+    case 'datasetDefaults': {
+      // Scale-aware opening posture: big projects start at the epic level with
+      // story-and-up links (progressive disclosure — drill in on demand);
+      // small ones open fully expanded as before.
+      const big = action.nodeCount > 400;
+      return {
+        ...state,
+        groupDepth: big ? 1 : 4,
+        linkLevel: big ? 'story' : 'all',
+        collapsed: new Set<string>(),
+        reveal: null,
       };
     }
     case 'setSearch': return { ...state, search: action.query };

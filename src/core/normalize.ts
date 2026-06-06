@@ -2,9 +2,9 @@ import type { Capabilities, Graph, GraphEdge, GraphNode } from './model';
 import { hierarchyLevelFor, initialsFrom, kindFromIssuetype, statusCategoryFrom } from './jira-fields';
 import { adfToText } from './adf';
 
-function hierarchyEdge(source: string, target: string, relation: string, raw: unknown): GraphEdge {
+function hierarchyEdge(source: string, target: string, relation: string): GraphEdge {
   const label = relation === 'subtask' ? 'subtask of' : relation === 'epic' ? 'epic' : 'parent';
-  return { id: `hier:${relation}:${source}->${target}`, source, target, kind: 'hierarchy', relation, label, directed: true, raw };
+  return { id: `hier:${relation}:${source}->${target}`, source, target, kind: 'hierarchy', relation, label, directed: true, raw: null };
 }
 
 function hierarchyEdges(raw: any, childKind: string, caps: Capabilities): GraphEdge[] {
@@ -12,11 +12,11 @@ function hierarchyEdges(raw: any, childKind: string, caps: Capabilities): GraphE
   if (f.parent?.key) {
     const parentKind = kindFromIssuetype(f.parent.fields?.issuetype);
     const relation = childKind === 'subtask' ? 'subtask' : parentKind === 'epic' ? 'epic' : 'parent';
-    return [hierarchyEdge(f.parent.key, raw.key, relation, f.parent)];
+    return [hierarchyEdge(f.parent.key, raw.key, relation)];
   }
   if (caps.hasEpicLink && caps.epicLinkFieldId) {
     const epicKey = f[caps.epicLinkFieldId];
-    if (typeof epicKey === 'string' && epicKey) return [hierarchyEdge(epicKey, raw.key, 'epic', { epicLink: epicKey })];
+    if (typeof epicKey === 'string' && epicKey) return [hierarchyEdge(epicKey, raw.key, 'epic')];
   }
   return [];
 }
@@ -33,7 +33,7 @@ function linkEdges(raw: any): GraphEdge[] {
     if (l.outwardIssue) { source = raw.key; target = l.outwardIssue.key; }
     else if (l.inwardIssue) { source = l.inwardIssue.key; target = raw.key; }
     if (source && target) {
-      out.push({ id: `link:${relation}:${source}->${target}`, source, target, kind: 'link', relation, label, directed, raw: l });
+      out.push({ id: `link:${relation}:${source}->${target}`, source, target, kind: 'link', relation, label, directed, raw: null });
     }
   }
   return out;
@@ -60,7 +60,7 @@ export function normalizeIssue(raw: any, caps: Capabilities): { node: GraphNode;
       : undefined,
     hierarchyLevel: hierarchyLevelFor(kind),
     url: `${caps.baseUrl}/browse/${raw.key}`,
-    raw,
+    raw: null, // payload dropped after normalize — at thousands of tickets it dominates memory
     project: f.project ? { key: f.project.key, name: f.project.name ?? f.project.key }
                        : { key: String(raw.key).split('-')[0], name: String(raw.key).split('-')[0] },
     description: adfToText(f.description) || undefined,

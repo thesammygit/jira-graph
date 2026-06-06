@@ -12,6 +12,14 @@
 @keyframes td-in { from { opacity: 0; transform: translateY(3px); } to { opacity: 1; transform: none; } }
 
 .td-rowline { display: flex; align-items: center; gap: 6px; }
+
+/* ── Virtualized rows (big trees) ─────────────────────────────────────── */
+.td-virtual { padding-top: 10px; }
+.td-vrow { position: absolute; left: 22px; right: 22px; display: flex; align-items: center; }
+.td-vrow .td-rowline { flex: 1; min-width: 0; }
+.td-vrow .td-row { white-space: nowrap; }
+/* per-level ancestor guide — same 38px pitch + line position as the nested view */
+.td-guide { flex: 0 0 12px; margin-left: 26px; align-self: stretch; border-left: 1.5px solid var(--border); }
 .td-caret { flex-shrink: 0; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center;
   background: none; border: none; border-radius: 6px; color: var(--ink-muted); font-size: 11px; cursor: pointer;
   transition: background 120ms ease, color 120ms ease; }

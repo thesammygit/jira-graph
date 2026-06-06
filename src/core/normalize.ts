@@ -83,6 +83,23 @@ export function normalizeIssues(rawIssues: any[], caps: Capabilities): Graph {
   const keys = new Set(nodes.map((n) => n.key));
   const edges = [...edgeMap.values()].filter((e) => keys.has(e.source) && keys.has(e.target));
 
+  // Promote hierarchy-type ISSUE LINKS (e.g. Jira Server's WBSGantt
+  // "Hierarchy link" — outward "contains") to real hierarchy edges so the
+  // Overview nests them like parent/Epic Link. linkEdges() already orients
+  // these parent→child for both outward and inward link records. A node only
+  // ever gets ONE hierarchy parent: if it already has parent/Epic Link, the
+  // plugin link stays a plain wire.
+  const hierTargets = new Set(edges.filter((e) => e.kind === 'hierarchy').map((e) => e.target));
+  for (const e of edges) {
+    if (e.kind !== 'link' || !e.relation.includes('hierarchy')) continue;
+    if (hierTargets.has(e.target) || e.source === e.target) continue;
+    e.kind = 'hierarchy';
+    e.relation = 'parent';
+    e.label = 'contains';
+    e.directed = true;
+    hierTargets.add(e.target);
+  }
+
   // Resolve each non-epic node's epic ancestor from hierarchy edges.
   const parentOf = new Map<string, string>();
   for (const e of edges) if (e.kind === 'hierarchy') parentOf.set(e.target, e.source);

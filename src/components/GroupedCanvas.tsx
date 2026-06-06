@@ -30,10 +30,10 @@ function Canvas({ graph, state, dispatch, onEdgeClick, onNodeOpen }: { graph: Gr
     const wired = nodes.map((n) => n.type === 'container'
       ? { ...n, data: { ...n.data, onToggle: (k: string) => dispatch({ type: 'toggleCollapsed', key: k }), onOpen: (k: string) => onNodeOpen?.(k) } }
       : n.type === 'moreChip'
-      ? { ...n, data: { ...n.data, onExpand: (k: string) => dispatch({ type: 'expandBox', key: k }) } }
+      ? { ...n, data: { ...n.data, onExpand: (k: string, mode: 'more' | 'filtered') => dispatch(mode === 'filtered' ? { type: 'clearFilters' } : { type: 'expandBox', key: k }) } }
       : n);
     return { nodes: wired, edges };
-  }, [graph, state.groupDepth, state.collapsed, state.hiddenTypes, state.hiddenStatuses, state.hiddenProjects, state.hiddenAssignees, state.hiddenRelations, state.linkLevel, state.hiddenLabels, state.hiddenComponents, state.doneDisplay, state.selectedKey, state.search, state.focusKey, state.expandedBoxes, dispatch, onNodeOpen]);
+  }, [graph, state.groupDepth, state.collapsed, state.onlyTypes, state.hiddenStatuses, state.onlyProjects, state.onlyAssignees, state.hiddenRelations, state.linkLevel, state.onlyLabels, state.onlyComponents, state.hideUngrouped, state.doneDisplay, state.selectedKey, state.search, state.focusKey, state.expandedBoxes, dispatch, onNodeOpen]);
 
   const { fitView } = useReactFlow();
   useEffect(() => {

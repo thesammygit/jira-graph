@@ -102,3 +102,5 @@
   from { opacity: 0; transform: translateY(4px); }
   to   { opacity: 1; transform: translateY(0); }
 }
+.ticket.compact.more-chip.filtered { background: color-mix(in srgb, var(--status-inprogress) 6%, var(--surface)); }
+.ticket.compact.more-chip.filtered .more-chip-label { color: var(--status-inprogress); }

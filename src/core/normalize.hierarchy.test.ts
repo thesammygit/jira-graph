@@ -1,4 +1,4 @@
-import { normalizeIssue } from './normalize';
+import { normalizeIssue, normalizeIssues } from './normalize';
 import type { Capabilities } from './model';
 
 const base: Capabilities = { apiVersion: 3, baseUrl: 'https://x', hasEpicLink: false };
@@ -52,4 +52,37 @@ test('parent field takes precedence over a present Epic Link', () => {
   const { edges } = normalizeIssue(raw, caps);
   expect(edges).toHaveLength(1);
   expect(edges[0]).toMatchObject({ relation: 'epic', source: 'EPIC-1', target: 'STORY-10' });
+});
+
+test('WBSGantt "Hierarchy link" issue links become real hierarchy edges (epic nests epic)', () => {
+  const caps: any = { apiVersion: 2, baseUrl: 'https://x.invalid', hasEpicLink: false };
+  const issues = [
+    { key: 'EP-1', fields: { summary: 'Parent epic', issuetype: { name: 'Epic', subtask: false },
+      status: { name: 'Open', statusCategory: { key: 'new' } },
+      issuelinks: [{ type: { name: 'Hierarchy link (WBSGantt)', inward: 'is contained in', outward: 'contains' }, outwardIssue: { key: 'EP-2' } }] } },
+    { key: 'EP-2', fields: { summary: 'Child epic', issuetype: { name: 'Epic', subtask: false },
+      status: { name: 'Open', statusCategory: { key: 'new' } } } },
+  ];
+  const g = normalizeIssues(issues, caps);
+  const hier = g.edges.find((e: any) => e.kind === 'hierarchy');
+  expect(hier).toBeTruthy();
+  expect(hier!.source).toBe('EP-1'); // parent contains child
+  expect(hier!.target).toBe('EP-2');
+  expect(g.edges.some((e: any) => e.kind === 'link')).toBe(false); // promoted, not duplicated
+});
+
+test('WBSGantt link stays a plain wire when the child already has a parent', () => {
+  const caps: any = { apiVersion: 2, baseUrl: 'https://x.invalid', hasEpicLink: false };
+  const issues = [
+    { key: 'EP-1', fields: { summary: 'e', issuetype: { name: 'Epic', subtask: false }, status: { name: 'O', statusCategory: { key: 'new' } },
+      issuelinks: [{ type: { name: 'Hierarchy link (WBSGantt)', inward: 'is contained in', outward: 'contains' }, outwardIssue: { key: 'ST-1' } }] } },
+    { key: 'EP-9', fields: { summary: 'e9', issuetype: { name: 'Epic', subtask: false }, status: { name: 'O', statusCategory: { key: 'new' } } } },
+    { key: 'ST-1', fields: { summary: 's', issuetype: { name: 'Story', subtask: false }, status: { name: 'O', statusCategory: { key: 'new' } },
+      parent: { key: 'EP-9', fields: { issuetype: { name: 'Epic', subtask: false } } } } },
+  ];
+  const g = normalizeIssues(issues, caps);
+  // real parent wins; the WBSGantt link survives as a visible wire, no second parent
+  expect(g.edges.filter((e: any) => e.kind === 'hierarchy' && e.target === 'ST-1')).toHaveLength(1);
+  expect(g.edges.find((e: any) => e.kind === 'hierarchy' && e.target === 'ST-1')!.source).toBe('EP-9');
+  expect(g.edges.some((e: any) => e.kind === 'link' && e.target === 'ST-1')).toBe(true);
 });

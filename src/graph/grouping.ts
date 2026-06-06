@@ -44,12 +44,18 @@ export function groupGraph(graph: Graph, depth: number): Grouping {
     return { key, node, subContainers, members };
   };
 
-  // Top-level containers = hierarchy roots that have children (e.g. epics).
-  const roots = graph.nodes.filter((n) => !hasParent.has(n.key) && (childrenOf.get(n.key) ?? []).length > 0);
+  // Top-level containers = hierarchy roots that have children, plus EVERY
+  // root epic — an epic is top-level by definition and renders as its own
+  // (possibly empty) box, never in Ungrouped.
+  const roots = graph.nodes.filter(
+    (n) => !hasParent.has(n.key) && ((childrenOf.get(n.key) ?? []).length > 0 || n.type.kind === 'epic'),
+  );
   const containers = roots.map((r) => build(r.key, 0));
 
-  // Orphans: roots with no children and no parent.
-  const orphans = graph.nodes.filter((n) => !hasParent.has(n.key) && (childrenOf.get(n.key) ?? []).length === 0);
+  // Orphans: non-epic roots with no children.
+  const orphans = graph.nodes.filter(
+    (n) => !hasParent.has(n.key) && (childrenOf.get(n.key) ?? []).length === 0 && n.type.kind !== 'epic',
+  );
   if (orphans.length) {
     containers.push({ key: '__ungrouped__', node: null, subContainers: [], members: orphans });
   }

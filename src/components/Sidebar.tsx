@@ -86,9 +86,9 @@ export function Sidebar(props: {
   const labels = Array.from(new Set(graph.nodes.flatMap((n) => n.labels))).sort();
   const components = Array.from(new Set(graph.nodes.flatMap((n) => n.components))).sort();
 
-  const hiddenCount =
-    state.hiddenTypes.size + state.hiddenStatuses.size + state.hiddenProjects.size +
-    state.hiddenAssignees.size + state.hiddenLabels.size + state.hiddenComponents.size +
+  const activeFilters =
+    state.onlyTypes.size + state.hiddenStatuses.size + state.onlyProjects.size +
+    state.onlyAssignees.size + state.onlyLabels.size + state.onlyComponents.size +
     state.hiddenRelations.size;
 
   return (
@@ -141,27 +141,34 @@ export function Sidebar(props: {
               onClick={() => dispatch({ type: 'setDoneDisplay', mode: m.id })}>{m.label}</button>
           ))}</div>
         </Row>
+        <Row label="Ungrouped" tip="The synthetic box holding loose tickets with no parent (epics always get their own box)">
+          <div className="sb-seg">
+            <button className={state.hideUngrouped ? '' : 'on'} onClick={() => state.hideUngrouped && dispatch({ type: 'toggleUngrouped' })}>Show</button>
+            <button className={state.hideUngrouped ? 'on' : ''} onClick={() => !state.hideUngrouped && dispatch({ type: 'toggleUngrouped' })}>Hide</button>
+          </div>
+        </Row>
       </Section>
 
       <Section
         id="filters" title="Filters" open={open.filters} onToggle={toggleOpen}
-        badge={hiddenCount > 0 ? `${hiddenCount} hidden` : undefined}
-        action={hiddenCount > 0 ? { label: 'Clear', onClick: () => dispatch({ type: 'clearFilters' }) } : undefined}>
+        badge={activeFilters > 0 ? `${activeFilters} active` : undefined}
+        action={activeFilters > 0 ? { label: 'Clear', onClick: () => dispatch({ type: 'clearFilters' }) } : undefined}>
+        <p className="sb-filter-note">Nothing selected = everything shown. Select to narrow.</p>
         <FilterGroup label="Projects">
           {projects.map((p) => (
-            <button key={p.key} className={`sb-chip ${state.hiddenProjects.has(p.key) ? '' : 'on'}`}
+            <button key={p.key} className={`sb-chip ${state.onlyProjects.has(p.key) ? 'on' : ''}`}
               onClick={() => dispatch({ type: 'toggleProject', key: p.key })} title={p.name}>{p.key}</button>
           ))}
         </FilterGroup>
         <FilterGroup label="Types">
           {TYPES.map((t) => (
-            <button key={t} className={`sb-chip ${state.hiddenTypes.has(t) ? '' : 'on'}`}
+            <button key={t} className={`sb-chip ${state.onlyTypes.has(t) ? 'on' : ''}`}
               onClick={() => dispatch({ type: 'toggleType', kind: t })}>{t}</button>
           ))}
         </FilterGroup>
         <FilterGroup label="People">
           {assignees.map((a) => (
-            <button key={a} className={`sb-chip ${state.hiddenAssignees.has(a) ? '' : 'on'}`}
+            <button key={a} className={`sb-chip ${state.onlyAssignees.has(a) ? 'on' : ''}`}
               onClick={() => dispatch({ type: 'toggleAssignee', name: a })}>
               {a === '__unassigned__' ? 'Unassigned' : a}
             </button>
@@ -170,7 +177,7 @@ export function Sidebar(props: {
         {labels.length > 0 && (
           <FilterGroup label="Labels">
             {labels.map((l) => (
-              <button key={l} className={`sb-chip ${state.hiddenLabels.has(l) ? '' : 'on'}`}
+              <button key={l} className={`sb-chip ${state.onlyLabels.has(l) ? 'on' : ''}`}
                 onClick={() => dispatch({ type: 'toggleLabel', label: l })}>{l}</button>
             ))}
           </FilterGroup>
@@ -178,7 +185,7 @@ export function Sidebar(props: {
         {components.length > 0 && (
           <FilterGroup label="Components">
             {components.map((c) => (
-              <button key={c} className={`sb-chip ${state.hiddenComponents.has(c) ? '' : 'on'}`}
+              <button key={c} className={`sb-chip ${state.onlyComponents.has(c) ? 'on' : ''}`}
                 onClick={() => dispatch({ type: 'toggleComponent', name: c })}>{c}</button>
             ))}
           </FilterGroup>

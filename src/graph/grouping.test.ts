@@ -37,3 +37,14 @@ test('orphans with no parent and no children go in a synthetic Ungrouped contain
   const ung = g.containers.find((c) => c.key === '__ungrouped__');
   expect(ung?.members.map((m) => m.key)).toEqual(['BUG-1']);
 });
+
+test('a childless EPIC is its own top-level box, never Ungrouped', () => {
+  const g: Graph = {
+    nodes: [{ ...n('EPIC-EMPTY', 1), type: { name: 'Epic', kind: 'epic' } } as any, n('LONE-TASK', 1)],
+    edges: [],
+  };
+  const grouped = groupGraph(g, 4);
+  expect(grouped.containers.some((c) => c.key === 'EPIC-EMPTY')).toBe(true);
+  const ung = grouped.containers.find((c) => c.key === '__ungrouped__');
+  expect(ung?.members.map((m) => m.key)).toEqual(['LONE-TASK']); // only the non-epic orphan
+});

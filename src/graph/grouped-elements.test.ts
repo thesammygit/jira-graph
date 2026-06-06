@@ -70,15 +70,19 @@ test('parent container nodes are ordered before their child nodes (React Flow re
 test('type filters remove grouped containers and members that no longer match', () => {
   const epicsOnly = {
     ...initialState,
-    hiddenTypes: new Set<IssueKind>(['story', 'task', 'subtask', 'bug']),
+    onlyTypes: new Set<IssueKind>(['epic']),
   };
   const { nodes, edges } = build(epicsOnly);
-  expect(nodes.map((x) => x.id).sort()).toEqual(['EPIC-1', 'EPIC-2']);
+  // the epic boxes survive; their filtered-out members are represented by
+  // an explanatory "N filtered" cell each, not silently blank boxes
+  expect(nodes.filter((x) => x.type === 'container').map((x) => x.id).sort()).toEqual(['EPIC-1', 'EPIC-2']);
+  expect(nodes.filter((x) => x.type === 'ticket')).toHaveLength(0);
+  expect(nodes.filter((x) => x.type === 'moreChip' && (x.data as any).mode === 'filtered')).toHaveLength(2);
   expect(edges).toHaveLength(0);
 });
 
 test('project filters remove every grouped box for that project', () => {
-  const hiddenProject = { ...initialState, hiddenProjects: new Set(['X']) };
+  const hiddenProject = { ...initialState, onlyProjects: new Set(['SOME-OTHER-PROJECT']) };
   const { nodes, edges } = build(hiddenProject);
   expect(nodes).toHaveLength(0);
   expect(edges).toHaveLength(0);
@@ -143,4 +147,31 @@ test('linkLevel hides wires whose tickets sit below the chosen level', () => {
   // task-and-up keeps them (no subtask endpoints in this graph)
   const taskUp = { ...initialState, linkLevel: 'task' as const };
   expect(build(taskUp).edges.length).toBeGreaterThan(0);
+});
+
+test('a box emptied purely by filters shows an "N filtered" cell instead of sitting blank', () => {
+  // People selection that matches nobody in the box (nodes here are unassigned)
+  const peopleFilter = { ...initialState, onlyAssignees: new Set(['Sam Brown']) };
+  const g: Graph = {
+    nodes: [{ ...n('EPIC-1', 'epic', 2), assignee: { displayName: 'Sam Brown', initials: 'SB' } } as any,
+            n('SUB-1', 'subtask', 0), n('SUB-2', 'subtask', 0)],
+    edges: [h('EPIC-1', 'SUB-1'), h('EPIC-1', 'SUB-2')],
+  };
+  const { nodes } = build(peopleFilter, g);
+  const chip = nodes.find((x) => x.type === 'moreChip');
+  expect(chip).toBeTruthy();
+  expect((chip!.data as any).label).toBe('2 filtered');
+  expect((chip!.data as any).mode).toBe('filtered');
+});
+
+test('hideUngrouped removes the synthetic Ungrouped box', () => {
+  const g: Graph = {
+    nodes: [n('EPIC-1', 'epic', 2), n('STORY-10', 'story', 1), n('LONE-1', 'task', 1)],
+    edges: [h('EPIC-1', 'STORY-10')],
+  };
+  expect(build(initialState, g).nodes.some((x) => x.id === '__ungrouped__')).toBe(true);
+  const hidden = { ...initialState, hideUngrouped: true };
+  const out = build(hidden, g);
+  expect(out.nodes.some((x) => x.id === '__ungrouped__')).toBe(false);
+  expect(out.nodes.some((x) => x.id === 'LONE-1')).toBe(false);
 });

@@ -9,12 +9,13 @@ import { isNodeVisible } from './visible';
 /** Max member chips a box renders before tucking the rest behind a +N-more cell. */
 export const MEMBER_CAP = 30;
 export const MORE_PREFIX = '__more__:';
+export const FILTERED_PREFIX = '__filtered__:';
 
-/** Synthetic member standing in for the tickets past the cap. */
-function moreChip(boxKey: string, hidden: number): GraphNode {
+/** Synthetic member standing in for tickets past the cap / hidden by filters. */
+function syntheticChip(prefix: string, boxKey: string, summary: string): GraphNode {
   return {
-    id: `${MORE_PREFIX}${boxKey}`, key: `${MORE_PREFIX}${boxKey}`,
-    summary: `+${hidden} more`, type: { name: 'More', kind: 'other' },
+    id: `${prefix}${boxKey}`, key: `${prefix}${boxKey}`,
+    summary, type: { name: 'More', kind: 'other' },
     status: { name: '', category: 'todo' }, hierarchyLevel: 0,
     url: '', raw: null, project: { key: '', name: '' }, labels: [], components: [],
   } as GraphNode;
@@ -27,11 +28,17 @@ export function filterGroupingForState(grouping: Grouping, state: GraphState): G
       .map(keepContainer)
       .filter((c): c is GroupContainer => Boolean(c));
     let members = container.members.filter((member) => isNodeVisible(member, state));
+    const filteredOut = container.members.length - members.length;
     // Pagination: huge flat boxes show the first MEMBER_CAP chips + a "+N more"
     // cell — links from tucked-away tickets re-aggregate onto the box.
     if (members.length > MEMBER_CAP && !state.expandedBoxes.has(container.key)) {
       const hidden = members.length - MEMBER_CAP;
-      members = [...members.slice(0, MEMBER_CAP), moreChip(container.key, hidden)];
+      members = [...members.slice(0, MEMBER_CAP), syntheticChip(MORE_PREFIX, container.key, `+${hidden} more`)];
+    }
+    // A box emptied purely by active filters explains itself instead of
+    // sitting there blank (e.g. epic ▸ subtasks with a People selection on).
+    if (members.length === 0 && subContainers.length === 0 && filteredOut > 0 && nodeVisible) {
+      members = [syntheticChip(FILTERED_PREFIX, container.key, `${filteredOut} filtered`)];
     }
 
     if (!nodeVisible && subContainers.length === 0 && members.length === 0) return null;
@@ -40,6 +47,7 @@ export function filterGroupingForState(grouping: Grouping, state: GraphState): G
 
   return {
     containers: grouping.containers
+      .filter((c) => !(state.hideUngrouped && c.key === '__ungrouped__'))
       .map(keepContainer)
       .filter((c): c is GroupContainer => Boolean(c)),
   };
@@ -59,7 +67,7 @@ export function toGroupedElements(graph: Graph, grouping: Grouping, layout: Grou
     ancestorChain.set(c.key, here);
     for (const m of c.members) {
       ownerContainer.set(m.key, c.key);
-      if (m.key.startsWith(MORE_PREFIX)) moreLabels.set(m.key, m.summary);
+      if (m.key.startsWith(MORE_PREFIX) || m.key.startsWith(FILTERED_PREFIX)) moreLabels.set(m.key, m.summary);
     }
     for (const s of c.subContainers) walk(s, here);
   };
@@ -92,12 +100,17 @@ export function toGroupedElements(graph: Graph, grouping: Grouping, layout: Grou
   for (const pm of layout.members) {
     const ownerCollapsed = state.collapsed.has(pm.parentKey) || isUnderCollapse(pm.parentKey);
     if (ownerCollapsed) continue;
-    if (pm.key.startsWith(MORE_PREFIX)) {
-      // "+N more" cell — expands its box to show every member
+    if (pm.key.startsWith(MORE_PREFIX) || pm.key.startsWith(FILTERED_PREFIX)) {
+      // synthetic cell: "+N more" expands its box; "N filtered" clears filters
+      const filtered = pm.key.startsWith(FILTERED_PREFIX);
       nodes.push({
         id: pm.key, type: 'moreChip', parentId: pm.parentKey, extent: 'parent',
         position: { x: pm.x, y: pm.y },
-        data: { boxKey: pm.key.slice(MORE_PREFIX.length), label: moreLabels.get(pm.key) ?? '+ more' },
+        data: {
+          boxKey: pm.key.slice(filtered ? FILTERED_PREFIX.length : MORE_PREFIX.length),
+          label: moreLabels.get(pm.key) ?? '+ more',
+          mode: filtered ? 'filtered' : 'more',
+        },
         width: GROUP.CHIP_W, height: GROUP.CHIP_H,
         style: { width: GROUP.CHIP_W, height: GROUP.CHIP_H },
       });

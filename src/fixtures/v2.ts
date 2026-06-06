@@ -265,4 +265,29 @@ export const v2Issues: any[] = [
       issuelinks: [isBlockedBy('STORY-201')],
     },
   },
+  // ── WBSGantt plugin hierarchy: EPIC-100 contains a child epic ───────────────
+  {
+    key: 'EPIC-110',
+    fields: {
+      summary: 'Billing phase 2 (child epic via WBSGantt)',
+      issuetype: Epic,
+      status: toDo,
+      priority: medium,
+      issuelinks: [{
+        type: { name: 'Hierarchy link (WBSGantt)', inward: 'is contained in', outward: 'contains' },
+        inwardIssue: { key: 'EPIC-100' }, // EPIC-110 "is contained in" EPIC-100
+      }],
+    },
+  },
+  // ── Loose ticket with no parent: lands in the Ungrouped box ────────────────
+  {
+    key: 'TASK-900',
+    fields: {
+      summary: 'Standalone ops chore (no parent)',
+      issuetype: Task,
+      status: toDo,
+      priority: low,
+      assignee: henry,
+    },
+  },
 ];

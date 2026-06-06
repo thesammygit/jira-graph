@@ -35,9 +35,9 @@ test('spotlightBack pops to the previous hero, then to overview', () => {
 test('setViewMode, group depth, filters, select, selectEdge', () => {
   expect(reducer(initialState, { type: 'setViewMode', viewMode: 'spotlight' }).viewMode).toBe('spotlight');
   expect(reducer(initialState, { type: 'setGroupDepth', depth: 2 }).groupDepth).toBe(2);
-  expect(reducer(initialState, { type: 'toggleProject', key: 'CHK' }).hiddenProjects.has('CHK')).toBe(true);
-  expect(reducer(initialState, { type: 'toggleAssignee', name: 'Sam' }).hiddenAssignees.has('Sam')).toBe(true);
-  expect(reducer(initialState, { type: 'toggleType', kind: 'bug' }).hiddenTypes.has('bug')).toBe(true);
+  expect(reducer(initialState, { type: 'toggleProject', key: 'CHK' }).onlyProjects.has('CHK')).toBe(true);
+  expect(reducer(initialState, { type: 'toggleAssignee', name: 'Sam' }).onlyAssignees.has('Sam')).toBe(true);
+  expect(reducer(initialState, { type: 'toggleType', kind: 'bug' }).onlyTypes.has('bug')).toBe(true);
   expect(reducer(initialState, { type: 'toggleCollapsed', key: 'E' }).collapsed.has('E')).toBe(true);
   const e = reducer(initialState, { type: 'selectEdge', id: 'x', x: 1, y: 2, srcKey: 'A', tgtKey: 'B', relation: 'blocks', label: 'blocks' });
   expect(e.selectedEdge?.id).toBe('x');
@@ -65,17 +65,24 @@ test('breadcrumbs: overview click starts fresh; revisiting a crumb truncates (no
 test('done display + label/component toggles', () => {
   expect(initialState.doneDisplay).toBe('normal');
   expect(reducer(initialState, { type: 'setDoneDisplay', mode: 'hide' }).doneDisplay).toBe('hide');
-  expect(reducer(initialState, { type: 'toggleLabel', label: 'backend' }).hiddenLabels.has('backend')).toBe(true);
-  expect(reducer(initialState, { type: 'toggleComponent', name: 'Payments' }).hiddenComponents.has('Payments')).toBe(true);
+  expect(reducer(initialState, { type: 'toggleLabel', label: 'backend' }).onlyLabels.has('backend')).toBe(true);
+  expect(reducer(initialState, { type: 'toggleComponent', name: 'Payments' }).onlyComponents.has('Payments')).toBe(true);
 });
 
-test('clearFilters resets every hidden set but leaves display prefs alone', () => {
+test('clearFilters resets every selection but leaves display prefs alone', () => {
   let s = reducer(initialState, { type: 'toggleProject', key: 'CHK' });
   s = reducer(s, { type: 'toggleLabel', label: 'backend' });
   s = reducer(s, { type: 'setDoneDisplay', mode: 'dim' });
   s = reducer(s, { type: 'clearFilters' });
-  expect(s.hiddenProjects.size + s.hiddenLabels.size + s.hiddenTypes.size).toBe(0);
+  expect(s.onlyProjects.size + s.onlyLabels.size + s.onlyTypes.size).toBe(0);
   expect(s.doneDisplay).toBe('dim'); // display pref untouched
+});
+
+test('toggleUngrouped flips the Ungrouped-box visibility', () => {
+  expect(initialState.hideUngrouped).toBe(false);
+  const s = reducer(initialState, { type: 'toggleUngrouped' });
+  expect(s.hideUngrouped).toBe(true);
+  expect(reducer(s, { type: 'toggleUngrouped' }).hideUngrouped).toBe(false);
 });
 
 test('revealInOverview loosens whatever hides the ticket and arms the zoom', () => {
@@ -85,16 +92,16 @@ test('revealInOverview loosens whatever hides the ticket and arms the zoom', () 
     assignee: { displayName: 'Sam Brown', initials: 'SB' }, labels: ['backend'], components: [],
   };
   let s = reducer(initialState, { type: 'setGroupDepth', depth: 1 });
-  s = reducer(s, { type: 'toggleProject', key: 'CHK' });
-  s = reducer(s, { type: 'toggleLabel', label: 'backend' });
+  s = reducer(s, { type: 'toggleProject', key: 'SRCH' });  // selection excludes CHK-9
+  s = reducer(s, { type: 'toggleLabel', label: 'frontend' }); // excludes 'backend'
   s = reducer(s, { type: 'setDoneDisplay', mode: 'hide' });
   s = reducer(s, { type: 'toggleCollapsed', key: 'CHK-2' });
   s = { ...s, viewMode: 'spotlight' as const };
   s = reducer(s, { type: 'revealInOverview', node, minDepth: 3, ancestors: ['CHK-2', 'CHK-1'] });
   expect(s.viewMode).toBe('overview');
   expect(s.groupDepth).toBe(3);                       // raised to make a task visible
-  expect(s.hiddenProjects.has('CHK')).toBe(false);    // project unhidden
-  expect(s.hiddenLabels.has('backend')).toBe(false);  // label unhidden
+  expect(s.onlyProjects.has('CHK')).toBe(true);       // selection widened to include it
+  expect(s.onlyLabels.has('backend')).toBe(true);     // label selection widened
   expect(s.doneDisplay).toBe('dim');                  // done no longer fully hidden
   expect(s.collapsed.has('CHK-2')).toBe(false);       // ancestor expanded
   expect(s.focusKey).toBe('CHK-9');
